@@ -48,8 +48,8 @@ class Path:
         j = 0
         for i in range(slice_length):
             if start_ind + j >= len(self.path):
-                j = 0
-            path_section.append(self.path[start_ind+i])
+                j = -start_ind
+            path_section.append(self.path[start_ind+j])
             j = j + 1
 
         # Now we need to fill in the rest of the path from the mate
@@ -62,12 +62,16 @@ class Path:
 
         # Finally, mutate the path using mutation rate probability
         mutate = np.random.choice([False, True], p=[1-self.mutation_rate, self.mutation_rate])
+        assert(len(self.path) == len(path_section)), print(len(path_section))
         if mutate:
             # select two indices randomly
             indices = np.random.choice(len(self.path), 2)
 
             # Swap the items at selected indices
-            path_section[indices[0]], path_section[indices[1]] = path_section[indices[1]], path_section[indices[0]]
+            try:
+                path_section[indices[0]], path_section[indices[1]] = path_section[indices[1]], path_section[indices[0]]
+            except:
+                print(indices)
 
         # Finally, create a new path object and return
         child = Path(self.no_vertices, self.mutation_rate, path=path_section)
