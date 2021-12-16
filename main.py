@@ -4,35 +4,38 @@ from graph import Graph
 from controller import Controller
 
 # Parameters
-mutation_rate = 0.1
-n_vertices = 30
-n_paths = 100
-dx = 100
-dy = 100
-pause = 0.05
+mutation_rate = 0.3
+n_vertices = 20
+n_paths = 50
+dx = 40
+dy = 40
+pause = 0.01
 
 # Create objects
 g = Graph(n_vertices, dx, dy)
 c = Controller(n_paths, n_vertices, mutation_rate, g)
 
 plt.ion()
-fig = plt.figure(figsize=(0.1*dx, 0.05*dy))
+fig = plt.figure(figsize=(10, 5))
 ax = fig.add_subplot(121)
 ax_score = fig.add_subplot(122)
 
 running = True
 total_iterations = 1
 steps = 0
-min_score = c.get_min_score()
-min_scores = [min_score]
 
 # Draw the plot
 c.draw(ax)
-ax.set_title(str(min_score))
 
 # Draw scores over time
-ax_score.plot(np.arange(total_iterations), min_scores)
-ax_score.set_title("Minimum Distance over Time")
+min_score = c.get_min_score()
+avg_score = c.get_avg_score()
+min_scores = [min_score]
+avg_scores = [avg_score]
+ax_score.plot(np.arange(total_iterations), min_scores, color='blue', label='minimum')
+ax_score.plot(np.arange(total_iterations), avg_scores, color='orange', label='average')
+ax_score.legend()
+ax_score.set_title("Minimum/Average Distance over Time")
 
 while running:
 
@@ -50,21 +53,26 @@ while running:
         running = False
 
     elif command.lower() == "step":
-        # Take a step, update min score
+        # Take a step
         c.step()
         total_iterations += 1
-        min_score = c.get_min_score()
-        min_scores.append(min_score)
 
         # update graph drawing
         ax.clear()
         c.draw(ax)
-        ax.set_title(str(min_score))
 
         # Update metrics graph
         ax_score.clear()
-        ax_score.plot(np.arange(total_iterations), min_scores)
-        ax_score.set_title("Minimum Distance over Time")
+
+        min_score = c.get_min_score()
+        avg_score = c.get_avg_score()
+        min_scores.append(min_score)
+        avg_scores.append(avg_score)
+
+        ax_score.plot(np.arange(total_iterations), min_scores, color='blue', label='minimum')
+        ax_score.plot(np.arange(total_iterations), avg_scores, color='orange', label='average')
+        ax_score.legend()
+        ax_score.set_title("Minimum/Average Distance over Time")
 
         plt.pause(pause)
 
