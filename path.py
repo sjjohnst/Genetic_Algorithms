@@ -1,7 +1,6 @@
 import numpy as np
 import math
 
-
 class Path:
     """
     A path is a sequence of vertices, representing a walk on a graph.
@@ -28,9 +27,14 @@ class Path:
         shifted_path.append(shifted_path.pop(0))
         self.edges = list(zip(self.path, shifted_path))
 
-        # self.score = 0
-        # for (a, b) in self.edges:
-        #     self.score += graph.distance(a, b)
+    def score(self, graph):
+        """ Calculate the total distance of this path, on graph """
+        score = 0
+
+        for (a, b) in self.edges:
+            score += graph.distance(a, b)
+
+        return score
 
     def __add__(self, mate):
         """ Breed two Paths """

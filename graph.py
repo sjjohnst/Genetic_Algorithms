@@ -57,7 +57,7 @@ class Graph:
             cc = plt.Circle(coord, radius=r)
             ax.add_artist(cc)
 
-    def draw_path(self, ax, p: Path, a_scale, color='black'):
+    def draw_path(self, ax, p: Path, alpha: float, color='black'):
         """ Draw the path onto graph """
 
         for (a, b) in p.edges:
@@ -67,4 +67,4 @@ class Graph:
             x = [a_coord[0], b_coord[0]]
             y = [a_coord[1], b_coord[1]]
 
-            ax.plot(x, y, color=color, alpha=(1.0/a_scale))
+            ax.plot(x, y, color=color, alpha=alpha)
