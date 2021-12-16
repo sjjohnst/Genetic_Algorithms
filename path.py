@@ -41,7 +41,7 @@ class Path:
 
         # Retrieve a random slice of the path from parent 1 (self)
         start_ind = np.random.randint(len(self.path))
-        slice_length = np.random.randint(low=2, high=len(self.path)-1)
+        slice_length = np.random.randint(low=int(self.no_vertices*0.2), high=int(self.no_vertices*0.8))
 
         # Retrieve this path section
         path_section = []
