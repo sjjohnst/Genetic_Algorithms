@@ -37,9 +37,10 @@ ax_score.plot(np.arange(total_iterations), avg_scores, color='orange', label='av
 ax_score.legend()
 ax_score.set_title("Minimum/Average Distance over Time")
 
+
 while running:
 
-    plt.draw()
+    plt.pause(0.005)
 
     # If running a set of steps do so. Otherwise ask for new command
     if steps > 0:
@@ -73,8 +74,6 @@ while running:
         ax_score.plot(np.arange(total_iterations), avg_scores, color='orange', label='average')
         ax_score.legend()
         ax_score.set_title("Minimum/Average Distance over Time")
-
-        plt.pause(pause)
 
     elif command.lower() == "run":
         steps = int(input("How many iterations to run for?: "))
