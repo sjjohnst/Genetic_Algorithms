@@ -1,6 +1,7 @@
 import pygame
 import random
 from parameters import *
+from environment import *
 
 # initialize pygame and create window
 pygame.init()
@@ -8,6 +9,9 @@ pygame.mixer.init()  # For sound
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Treevolution")
 clock = pygame.time.Clock()  # For syncing the FPS
+
+# Define objects in the simulation
+env = Environment(WIDTH, HEIGHT, step=1)
 
 # Game loop
 running = True
@@ -23,7 +27,7 @@ while running:
     # 2 Update
 
     # 3 Draw/render
-    screen.fill(BLACK)
+    pygame.surfarray.blit_array(screen, env.get_sun_im())
 
     ############
 

@@ -1,5 +1,5 @@
 WIDTH = 800
-HEIGHT = 400
+HEIGHT = 800
 FPS = 30
 
 # Define Colors
