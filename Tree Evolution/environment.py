@@ -38,18 +38,19 @@ class Environment:
     def get_grid(self):
         return np.copy(self.grid)
 
-    def update_sun(self, tree):
+    def update_sun(self, trees):
         # Take a Tree (pygame sprite group), and calculate shadows
         self.sunlight = np.ones_like(self.sunlight)
-        for s in tree.leaves:
-            min_x = s.x - s.r
-            max_x = s.x + s.r
-            x_idx_min = find_nearest(self.X, min_x)
-            x_idx_max = find_nearest(self.X, max_x)
-            y_idx = find_nearest(self.Y, s.y)
+        for tree in trees:
+            for s in tree.leaves:
+                min_x = s.x - s.r
+                max_x = s.x + s.r
+                x_idx_min = find_nearest(self.X, min_x)
+                x_idx_max = find_nearest(self.X, max_x)
+                y_idx = find_nearest(self.Y, s.y)
 
-            # Decrease sunlight everywhere below the array index found
-            self.sunlight[x_idx_min:x_idx_max, y_idx+1:] = self.sunlight[x_idx_min:x_idx_max, y_idx+1:] * 0.90
+                # Decrease sunlight everywhere below the array index found
+                self.sunlight[x_idx_min:x_idx_max, y_idx+1:] = self.sunlight[x_idx_min:x_idx_max, y_idx+1:] * 0.90
 
     def get_sun_im(self):
         sun_im = np.expand_dims(np.copy(self.sunlight), axis=-1).repeat(3, axis=-1) * 200
