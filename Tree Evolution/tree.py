@@ -3,6 +3,7 @@ from parameters import *
 import math
 
 
+# SPRITES
 class Leaf(pygame.sprite.Sprite):
 
     def __init__(self, width, height, pos):
@@ -41,22 +42,49 @@ class Branch(pygame.sprite.Sprite):
         self.x1, self.y1 = pos1
         self.x2, self.y2 = pos2
 
-        pygame.draw.line(self.image, BLUE, (self.x1, self.y1), (self.x2, self.y2))
+        pygame.draw.line(self.image, BROWN, (self.x1, self.y1), (self.x2, self.y2), width = 2)
 
 
+# Tree Sprite Group
 class Tree(pygame.sprite.Group):
 
     def __init__(self, root):
         super().__init__()
 
-        # The location of the tree base
         self.root = root
+        self.tree = Node(root)
+        # Dictionary maps position to tree node
+        self.pos_to_node = {root: self.tree}
 
-        # Leaves
+        # Add sprite for first node
         leaf = Leaf(WIDTH, HEIGHT, root)
         self.add(leaf)
         self.leaves = [leaf]
+        self.branches = []
 
-    def add_leaf(self, sprite):
-        self.add(sprite)
-        self.leaves.append(sprite)
+    def insert(self, pos1, pos2):
+        # Use pos1 to access parent node, then add child
+        parent = self.pos_to_node[pos1]
+        self.pos_to_node[pos2] = parent.add(pos2)
+
+        # Now add leaf, and branch
+        lf = Leaf(WIDTH, HEIGHT, pos2)
+        self.leaves.append(lf)
+        self.add(lf)
+
+        br = Branch(WIDTH, HEIGHT, parent.pos, pos2)
+        self.branches.append(br)
+        self.add(br)
+
+
+class Node:
+
+    def __init__(self, position):
+
+        self.pos = position
+        self.children = []
+
+    def add(self, pos):
+        new_node = Node(pos)
+        self.children.append(new_node)
+        return new_node
