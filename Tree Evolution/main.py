@@ -40,6 +40,10 @@ while running:
                 for tree in trees:
                     tree.shift_root(10)
                 leaf1pos = leaf1pos[0]+10, leaf1pos[1]
+            if event.key == pygame.K_LEFT:
+                for tree in trees:
+                    tree.shift_root(-10)
+                leaf1pos = leaf1pos[0]-10, leaf1pos[1]
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:

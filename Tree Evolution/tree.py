@@ -39,20 +39,36 @@ class Branch(pygame.sprite.Sprite):
     def __init__(self, pos1, pos2):
         super().__init__()
 
-        width = pos2[0] - pos1[0]
-        height = pos2[1] - pos1[1]
-            self.image = pygame.Surface([abs(width), abs(height)])
-        # self.image.fill(WHITE)
-        # self.image.set_colorkey(WHITE)
+        self.pos1 = pos1
+        self.pos2 = pos2
 
-        self.x1, self.y1 = pos1
-        self.x2, self.y2 = pos2
+        if self.pos1[0] > self.pos2[0]:
+            temp = self.pos1
+            self.pos1 = self.pos2
+            self.pos2 = temp
 
-        pygame.draw.line(self.image, BROWN, (0, height), (width, 0), width=2)
+        width = abs(pos2[0] - pos1[0])
+        height = abs(pos2[1] - pos1[1])
+
+        self.x1, self.y1 = self.pos1
+        self.x2, self.y2 = self.pos2
+
+        self.image = pygame.Surface([width, height])
+        self.image.fill(WHITE)
+        self.image.set_colorkey(WHITE)
+
+        if self.pos1[1] < self.pos2[1]:
+            self.pos1 = (0,0)
+            self.pos2 = (width,height)
+        else:
+            self.pos1 = (0, height)
+            self.pos2 = (width, 0)
+
+        pygame.draw.line(self.image, BROWN, self.pos1, self.pos2, width=3)
         self.rect = self.image.get_rect()
 
     def update(self):
-        self.rect.topleft = self.x1, self.x2
+        self.rect.topleft = min(self.x1, self.x2), min(self.y1, self.y2)
 
 
 # Tree Sprite Group
