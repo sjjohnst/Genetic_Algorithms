@@ -3,6 +3,7 @@ import random
 from parameters import *
 from environment import *
 from tree import *
+from display import *
 
 # initialize pygame and create window
 pygame.init()
@@ -18,7 +19,7 @@ background.fill((0,0,0))
 
 # Define objects in the simulation
 env = Environment(WIDTH, HEIGHT, step=1)
-gene = [(3, 100, 800), (1, 95, 750), (0, 90, 700), (0, 105, 702), (1, 129, 770), (0, 140, 750), (0, 73, 765)]
+gene = [(3, 100, 800), (1, 95, 750), (0, 90, 700), (1, 105, 702), (1, 129, 770), (0, 140, 750), (0, 73, 765)]
 tree, _ = build_from_genes(gene)
 trees = [TreeSprite(tree)]
 
@@ -37,15 +38,15 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        # elif event.type == pygame.KEYDOWN:
-        #     if event.key == pygame.K_RIGHT:
-        #         for tree in trees:
-        #             tree.shift_root(10)
-        #         leaf1pos = leaf1pos[0]+10, leaf1pos[1]
-        #     if event.key == pygame.K_LEFT:
-        #         for tree in trees:
-        #             tree.shift_root(-10)
-        #         leaf1pos = leaf1pos[0]-10, leaf1pos[1]
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                for tree in trees:
+                    tree.shift_root(10)
+                leaf1pos = leaf1pos[0]+10, leaf1pos[1]
+            if event.key == pygame.K_LEFT:
+                for tree in trees:
+                    tree.shift_root(-10)
+                leaf1pos = leaf1pos[0]-10, leaf1pos[1]
         #
         # elif event.type == pygame.MOUSEBUTTONDOWN:
         #     if event.button == 1:
@@ -77,15 +78,15 @@ while running:
 
     # 2 Update
     env.update_sun(trees)
-    for stree in trees:
-        stree.clear(screen, background)
-        stree.update()
+    for tree in trees:
+        tree.clear(screen, background)
+        tree.update()
 
     # 3 Draw/render
-    screen.blit(background, (0,0))
+    screen.blit(background, (0, 0))
     pygame.surfarray.blit_array(screen, env.get_sun_im())
-    for stree in trees:
-        stree.draw(screen)
+    for tree in trees:
+        tree.draw(screen)
 
     ############
 
