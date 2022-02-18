@@ -1,6 +1,7 @@
 import pygame
 from parameters import *
 from tree import *
+from environment import *
 import math
 
 
@@ -102,6 +103,25 @@ class TreeSprite(pygame.sprite.Group):
         self.branches = []
 
         self.__build_from_tree(self.root)
+
+    def calculate_sun(self, env_grid):
+        sun, X, Y = env_grid
+
+        energy_gathered = 0
+        for s in self.leaves:
+            min_x = s.x - s.r
+            max_x = s.x + s.r
+            x_idx_min = find_nearest(X, min_x)
+            x_idx_max = find_nearest(X, max_x)
+
+            min_y = s.y - s.r
+            max_y = s.y + s.r
+            y_idx_min = find_nearest(Y, min_y)
+            y_idx_max = find_nearest(Y, max_y)
+
+            # Decrease sunlight everywhere below the array index found
+            energy_gathered += np.sum(sun[x_idx_min:x_idx_max, y_idx_min:y_idx_max])
+        return energy_gathered
 
     def __build_from_tree(self, node: Tree):
         # Recursive function to add in leaf and branch sprites

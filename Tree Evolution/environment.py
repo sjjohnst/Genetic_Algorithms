@@ -38,6 +38,9 @@ class Environment:
     def get_grid(self):
         return np.copy(self.grid)
 
+    def get_sun(self):
+        return self.sunlight, self.X, self.Y
+
     def update_sun(self, trees):
         # Take a Tree (pygame sprite group), and calculate shadows
         self.sunlight = np.ones_like(self.sunlight)
@@ -53,6 +56,7 @@ class Environment:
                 self.sunlight[x_idx_min:x_idx_max, y_idx+1:] = self.sunlight[x_idx_min:x_idx_max, y_idx+1:] * 0.90
 
     def get_sun_im(self):
+        # For plotting the greyscale background
         sun_im = np.expand_dims(np.copy(self.sunlight), axis=-1).repeat(3, axis=-1) * 200
         return sun_im
 
