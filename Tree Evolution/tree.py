@@ -121,6 +121,9 @@ def build_from_genes(genes):
     sub_children_seen = 0  # Helps keep track of skipping tuples in the array
     for i in range(c):
         idx = i + 1 + sub_children_seen
+        if idx >= len(genes):
+            # Run out of children, exit
+            break
         child, sub_children = build_from_genes(genes[idx:])
         root.children.append(child)
         sub_children_seen += sub_children

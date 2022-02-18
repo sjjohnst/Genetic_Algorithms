@@ -18,7 +18,7 @@ background.fill((0,0,0))
 
 # Define objects in the simulation
 env = Environment(WIDTH, HEIGHT, step=1)
-gene = [(3, 100, 800), (2, 95, 750), (0, 90, 700), (0, 105, 702), (1, 129, 770), (0, 140, 750), (0, 73, 765)]
+gene = [(3, 100, 800), (1, 95, 750), (0, 90, 700), (0, 105, 702), (1, 129, 770), (0, 140, 750), (0, 73, 765)]
 tree, _ = build_from_genes(gene)
 trees = [TreeSprite(tree)]
 
