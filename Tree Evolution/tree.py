@@ -39,81 +39,58 @@ class Branch(pygame.sprite.Sprite):
     def __init__(self, pos1, pos2):
         super().__init__()
 
-        self.pos1 = pos1
-        self.pos2 = pos2
+        # Swap position 1 and 2 such that we only need to check two cases later on fro drawing the branch
+        if pos1[0] > pos2[0]:
+            temp = pos1
+            pos1 = pos2
+            pos2 = temp
 
-        if self.pos1[0] > self.pos2[0]:
-            temp = self.pos1
-            self.pos1 = self.pos2
-            self.pos2 = temp
+        self.x1, self.y1 = pos1
+        self.x2, self.y2 = pos2
 
-        width = abs(pos2[0] - pos1[0])
-        height = abs(pos2[1] - pos1[1])
+        # Calculate the width and height of bounding box
+        width = abs(self.x2 - self.x1)
+        height = abs(self.y2 - self.y1)
 
-        self.x1, self.y1 = self.pos1
-        self.x2, self.y2 = self.pos2
+        # Different cases for line drawing
+        if width == 0:
+            # Edge case where width is 0, place line in middle
+            print("zero width")
+            width = 10
+            pos1 = (width/2, 0)
+            pos2 = (width/2, height)
 
+        elif height == 0:
+            # Edge case where height is 0, place line in middle
+            height = 10
+            pos1 = (0, height/2)
+            pos2 = (width, height/2)
+
+        else:
+            # Two other cases, line goes from one corner to another
+
+            # Line goes top left to bottom right
+            if pos1[1] < pos2[1]:
+                pos1 = (0,0)
+                pos2 = (width,height)
+            # Line goes bottom left to top right
+            else:
+                pos1 = (0, height)
+                pos2 = (width, 0)
+
+        # Create rectangle and add a line
         self.image = pygame.Surface([width, height])
         self.image.fill(WHITE)
         self.image.set_colorkey(WHITE)
+        pygame.draw.line(self.image, BROWN, pos1, pos2, width=3)
 
-        if self.pos1[1] < self.pos2[1]:
-            self.pos1 = (0,0)
-            self.pos2 = (width,height)
-        else:
-            self.pos1 = (0, height)
-            self.pos2 = (width, 0)
-
-        pygame.draw.line(self.image, BROWN, self.pos1, self.pos2, width=3)
         self.rect = self.image.get_rect()
 
     def update(self):
-        self.rect.topleft = min(self.x1, self.x2), min(self.y1, self.y2)
+        self.rect.center = (self.x1 + self.x2) / 2.0, (self.y1 + self.y2) / 2.0
 
 
-# Tree Sprite Group
-class Tree(pygame.sprite.Group):
-
-    def __init__(self, root):
-        super().__init__()
-
-        self.root = root
-        self.tree = Node(root)
-        # Dictionary maps position to tree node
-        self.pos_to_node = {root: self.tree}
-
-        # Add sprite for first node
-        leaf = Leaf(root)
-        self.add(leaf)
-        self.leaves = [leaf]
-        self.branches = []
-
-    def insert(self, pos1, pos2):
-        # Use pos1 to access parent node, then add child
-        parent = self.pos_to_node[pos1]
-        self.pos_to_node[pos2] = parent.add(pos2)
-
-        # Now add leaf, and branch
-        lf = Leaf(pos2)
-        self.leaves.append(lf)
-        self.add(lf)
-
-        br = Branch(parent.pos, pos2)
-        self.branches.append(br)
-        self.add(br)
-
-    def shift_root(self, x):
-        # Move the entire tree by x
-        self.tree.shift_positions(x)
-        self.pos_to_node = {(pos[0]+x, pos[1]): value for pos, value in self.pos_to_node.items()}
-        for lf in self.leaves:
-            lf.x += x
-        for br in self.branches:
-            br.x1 += x
-            br.x2 += x
-
-
-class Node:
+class Tree:
 
     def __init__(self, position):
 
@@ -121,7 +98,7 @@ class Node:
         self.children = []
 
     def add(self, pos):
-        new_node = Node(pos)
+        new_node = Tree(pos)
         self.children.append(new_node)
         return new_node
 
@@ -131,3 +108,58 @@ class Node:
         # recurse
         for child in self.children:
             child.shift_positions(x)
+
+
+def build_from_genes(genes):
+    # Genes is a list of tuples: (c, x ,y)
+    # where c = number of children, and (x,y) is position of that node
+
+    c, x, y = genes[0]
+    root = Tree((x, y))
+
+    # Recurse for each child
+    sub_children_seen = 0  # Helps keep track of skipping tuples in the array
+    for i in range(c):
+        idx = i + 1 + sub_children_seen
+        child, sub_children = build_from_genes(genes[idx:])
+        root.children.append(child)
+        sub_children_seen += sub_children
+
+    sub_children_seen += c
+    return root, sub_children_seen
+
+
+# Tree Sprite Group: Takes a physical tree structure and turns into sprite for pygame display
+class TreeSprite(pygame.sprite.Group):
+
+    def __init__(self, root: Tree):
+        super().__init__()
+
+        self.root = root
+        self.leaves = []
+        self.branches = []
+
+        self.__build_from_tree(self.root)
+
+    def __build_from_tree(self, node: Tree):
+        # Recursive function to add in leaf and branch sprites
+        # Input: a node of the Tree structure
+
+        # Add a leaf for this node
+        lf = Leaf(node.pos)
+        self.leaves.append(lf)
+        self.add(lf)
+
+        # Add a branch to every child
+        for child in node.children:
+            br = Branch(node.pos, child.pos)
+            self.branches.append(br)
+            self.add(br)
+            self.__build_from_tree(child)
+
+    def shift_root(self, x):
+        # Move the entire tree by x
+        self.root.shift_positions(x)
+        self.leaves = []
+        self.branches = []
+        self.__build_from_tree(self.root)

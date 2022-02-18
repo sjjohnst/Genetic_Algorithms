@@ -18,7 +18,9 @@ background.fill((0,0,0))
 
 # Define objects in the simulation
 env = Environment(WIDTH, HEIGHT, step=1)
-trees = []
+gene = [(3, 100, 800), (2, 95, 750), (0, 90, 700), (0, 105, 702), (1, 129, 770), (0, 140, 750), (0, 73, 765)]
+tree, _ = build_from_genes(gene)
+trees = [TreeSprite(tree)]
 
 # Game loop
 running = True
@@ -35,55 +37,55 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                for tree in trees:
-                    tree.shift_root(10)
-                leaf1pos = leaf1pos[0]+10, leaf1pos[1]
-            if event.key == pygame.K_LEFT:
-                for tree in trees:
-                    tree.shift_root(-10)
-                leaf1pos = leaf1pos[0]-10, leaf1pos[1]
-
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                for tree in trees:
-                    for s in tree.leaves:
-                        hit = s.check_click(event.pos)
-                        if hit:
-                            leaf1pos = (s.x, s.y)
-                            break
-
-                    if hit:
-                        current_tree = tree
-                        break
-
-                # add a leaf
-                if not hit:
-                    pos = pygame.mouse.get_pos()
-                    current_tree.insert(leaf1pos, pos)
-                    leaf1pos = pos
-                    break
-
-            if event.button == 3:
-                pos = pygame.mouse.get_pos()
-                pos = pos[0], HEIGHT
-                tree = Tree(pos)
-                trees.append(tree)
-                leaf1pos = pos
-                current_tree = tree
+        # elif event.type == pygame.KEYDOWN:
+        #     if event.key == pygame.K_RIGHT:
+        #         for tree in trees:
+        #             tree.shift_root(10)
+        #         leaf1pos = leaf1pos[0]+10, leaf1pos[1]
+        #     if event.key == pygame.K_LEFT:
+        #         for tree in trees:
+        #             tree.shift_root(-10)
+        #         leaf1pos = leaf1pos[0]-10, leaf1pos[1]
+        #
+        # elif event.type == pygame.MOUSEBUTTONDOWN:
+        #     if event.button == 1:
+        #         for tree in trees:
+        #             for s in tree.leaves:
+        #                 hit = s.check_click(event.pos)
+        #                 if hit:
+        #                     leaf1pos = (s.x, s.y)
+        #                     break
+        #
+        #             if hit:
+        #                 current_tree = tree
+        #                 break
+        #
+        #         # add a leaf
+        #         if not hit:
+        #             pos = pygame.mouse.get_pos()
+        #             current_tree.insert(leaf1pos, pos)
+        #             leaf1pos = pos
+        #             break
+        #
+        #     if event.button == 3:
+        #         pos = pygame.mouse.get_pos()
+        #         pos = pos[0], HEIGHT
+        #         tree = Tree(pos)
+        #         trees.append(tree)
+        #         leaf1pos = pos
+        #         current_tree = tree
 
     # 2 Update
     env.update_sun(trees)
-    for tree in trees:
-        tree.clear(screen, background)
-        tree.update()
+    for stree in trees:
+        stree.clear(screen, background)
+        stree.update()
 
     # 3 Draw/render
     screen.blit(background, (0,0))
     pygame.surfarray.blit_array(screen, env.get_sun_im())
-    for tree in trees:
-        tree.draw(screen)
+    for stree in trees:
+        stree.draw(screen)
 
     ############
 
