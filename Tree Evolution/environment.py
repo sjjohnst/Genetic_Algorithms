@@ -4,10 +4,12 @@ A discrete grid of cells, which represents the environment organisms will grow a
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array-value)).argmin()
     return idx
+
 
 class Environment:
 
@@ -26,14 +28,16 @@ class Environment:
         self.sunlight = np.ones_like(X)
 
         # Initial sunlight is a gradient from top of environment to bottom
-        # self.sunlight = np.ones_like(self.X)
-        # alpha = np.log(4) / self.sunlight.shape[0]
-        # for i in range(self.sunlight.shape[1]):
-        #     if i == 0:
-        #         continue
-        #     self.sunlight[:, i] = self.sunlight[:, i] * np.exp(-alpha*i)
+        self.sunlight = self.reset_sunlight()
 
-        # Parameters for plotting onto pygame surface
+    def reset_sunlight(self):
+        sunlight = np.ones_like(self.sunlight)
+        alpha = np.log(4) / sunlight.shape[0]
+        for i in range(sunlight.shape[1]):
+            if i == 0:
+                continue
+            sunlight[:, i] = sunlight[:, i] * np.exp(-alpha * i)
+        return sunlight
 
     def get_grid(self):
         return np.copy(self.grid)
@@ -43,7 +47,7 @@ class Environment:
 
     def update_sun(self, trees):
         # Take a Tree (pygame sprite group), and calculate shadows
-        self.sunlight = np.ones_like(self.sunlight)
+        self.sunlight = self.reset_sunlight()
         for tree in trees:
             for s in tree.leaves:
                 min_x = s.x - s.r
