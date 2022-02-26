@@ -7,6 +7,10 @@ SIM_WIDTH = 400
 SIM_HEIGHT = 400
 SIM_POS = (400, 0)
 
+FIT_WIDTH = 200
+FIT_HEIGHT = 200
+FIT_POS = (0, 0)
+
 FPS = 30
 
 # Define Colours

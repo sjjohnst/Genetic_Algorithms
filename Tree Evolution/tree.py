@@ -30,12 +30,25 @@ class Tree:
         self.children.append(new_node)
         return new_node
 
-    def shift_positions(self, x):
+    def shift_x_positions(self, x):
         # update
         self.pos = self.pos[0] + x, self.pos[1]
         # recurse
         for child in self.children:
-            child.shift_positions(x)
+            child.shift_x_positions(x)
+
+    def shift_y_positions(self, y):
+        self.pos = self.pos[0], self.pos[1] + y
+        # recurse
+        for child in self.children:
+            child.shift_y_positions(y)
+
+    def shift_to_position(self, dest):
+        # Move the root to be at destination, update children accordingly
+        diff_x = dest[0] - self.pos[0]
+        diff_y = dest[1] - self.pos[1]
+        self.shift_x_positions(diff_x)
+        self.shift_y_positions(diff_y)
 
     def get_weight(self):
         weight = 1
@@ -85,12 +98,12 @@ class Tree:
                 c = 0
             if x < 0:
                 x = 0
-            elif x > WIDTH:
-                x = WIDTH
+            elif x > SIM_WIDTH:
+                x = SIM_WIDTH
             if y < 0:
                 y = 0
-            elif y > HEIGHT:
-                y = HEIGHT
+            elif y > SIM_HEIGHT:
+                y = SIM_HEIGHT
 
             new_genes[i] = (c, x, y)
 
