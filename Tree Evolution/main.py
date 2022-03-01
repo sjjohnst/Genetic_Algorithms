@@ -20,13 +20,13 @@ fittest.fill(BGR)
 # ======================================================================================================
 # SETUP THE BACKEND SIMULATION
 env = Environment(SIM_WIDTH, SIM_HEIGHT, step=1)
-gene = [(2, 100, HEIGHT), (0, 110, 780), (0, 95, 781)]
+gene = [(2, 100, HEIGHT), (0, 110, HEIGHT-20), (0, 95, HEIGHT-25)]
 tree, _ = build_from_genes(gene)
 
 trees = [TreeSprite(tree)]
 
 gene_pool = []
-num_trees = 2
+num_trees = 100
 for i in range(num_trees):
     new_gene = tree.mutate_genes()
     new_tree, _ = build_from_genes(new_gene)

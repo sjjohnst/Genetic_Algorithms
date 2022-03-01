@@ -57,7 +57,7 @@ class Branch(pygame.sprite.Sprite):
         # Different cases for line drawing
         if width == 0:
             # Edge case where width is 0, place line in middle
-            print("zero width")
+            # print("zero width")
             width = 10
             pos1 = (width/2, 0)
             pos2 = (width/2, height)

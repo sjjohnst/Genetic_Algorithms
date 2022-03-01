@@ -13,7 +13,7 @@ def magnitude(pos1, pos2):
 
 
 def angle(pos1, pos2):
-    return math.atan((pos1[1] - pos2[1]) / (pos1[0] - pos2[0]))
+    return math.atan((pos1[1] - pos2[1]) / (pos1[0] - pos2[0] + 0.0000001))
 
 
 class Tree:
@@ -86,7 +86,7 @@ class Tree:
                 if change_x:
                     x += np.random.normal(0, position_shift_x)
                 if change_y:
-                    y += random.uniform(0, position_shift_y)
+                    y += np.random.normal(0, position_shift_y)
 
                 if swap_genes:
                     j = np.random.choice(len(new_genes))
@@ -110,10 +110,21 @@ class Tree:
         add_node = decision(p_new_node)
 
         if add_node:
-            new_x = np.random.normal(x,2.0)
-            new_y = np.random.normal(y,2.0)
+            new_genes[-1] = (c+1, x, y)
+            new_x = np.random.normal(x, position_shift_x)
+            new_y = np.random.normal(y, position_shift_y)
+
+            if new_x < 0:
+                new_x = 0
+            elif new_x > SIM_WIDTH:
+                new_x = SIM_WIDTH
+            if new_y < 0:
+                new_y = 0
+            elif new_y > SIM_HEIGHT:
+                new_y = SIM_HEIGHT
+
             c = 0
-            new_genes.append((c,new_x,new_y))
+            new_genes.append((c, new_x, new_y))
 
         return new_genes
 
@@ -142,9 +153,9 @@ def build_from_genes(genes):
         theta = angle(this_pos, child.pos)
         force = weight * r * math.cos(theta)
         # print(r, theta, force)
-        # if force > snap_force:
-        #     # branch can't support its children, skip
-        #     continue
+        if force > snap_force:
+            # branch can't support its children, skip
+            continue
 
         # Otherwise, valid child, add
         root.children.append(child)

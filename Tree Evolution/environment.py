@@ -32,7 +32,7 @@ class Environment:
 
     def reset_sunlight(self):
         sunlight = np.ones_like(self.sunlight)
-        alpha = np.log(4) / sunlight.shape[0]
+        alpha = np.log(2) / sunlight.shape[0]
         for i in range(sunlight.shape[1]):
             if i == 0:
                 continue
@@ -57,7 +57,7 @@ class Environment:
                 y_idx = find_nearest(self.Y, s.y)
 
                 # Decrease sunlight everywhere below the array index found
-                self.sunlight[x_idx_min:x_idx_max, y_idx+1:] = self.sunlight[x_idx_min:x_idx_max, y_idx+1:] * 0.90
+                self.sunlight[x_idx_min:x_idx_max, y_idx+1:] = self.sunlight[x_idx_min:x_idx_max, y_idx+1:] * 0.9
 
     def get_sun_im(self):
         # For plotting the greyscale background
