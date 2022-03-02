@@ -128,22 +128,24 @@ class TreeSprite(pygame.sprite.Group):
         # Input: a node of the Tree structure
 
         # Add a leaf for this node
-        lf = Leaf(node.pos)
+        lf = Leaf(node.pos())
         self.leaves.append(lf)
         self.add(lf)
 
         # Add a branch to every child
         for child in node.children:
-            br = Branch(node.pos, child.pos)
+            br = Branch(node.pos(), child.pos())
             self.branches.append(br)
             self.add(br)
             self.__build_from_tree(child)
 
-    def shift_root(self, x):
+    def shift_root(self, desired):
         # Move the entire tree by x
-        self.root.shift_positions(x)
-        for lf in self.leaves:
-            lf.x += x
-        for br in self.branches:
-            br.x1 += x
-            br.x2 += x
+        self.root.shift_to_position(desired)
+
+        # remove old leaves and branches
+        self.leaves[:] = []
+        self.branches[:] = []
+
+        # Rebuild
+        self.__build_from_tree(self.root)

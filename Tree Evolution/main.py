@@ -1,4 +1,5 @@
 from sprites import *
+import copy
 
 # Initialize pygame and create window
 pygame.init()
@@ -20,30 +21,24 @@ fittest.fill(BGR)
 # ======================================================================================================
 # SETUP THE BACKEND SIMULATION
 env = Environment(SIM_WIDTH, SIM_HEIGHT, step=1)
-gene = [(2, 100, HEIGHT), (0, 110, HEIGHT-20), (0, 95, HEIGHT-25)]
-tree, _ = build_from_genes(gene)
 
-trees = [TreeSprite(tree)]
+N = 100
+mutation_rates = {
+    "p_new_node": 0.0002,
+    "p_shift_x": 0.008,
+    "p_shift_y": 0.008
+}
 
-gene_pool = []
-num_trees = 100
-for i in range(num_trees):
-    new_gene = tree.mutate_genes()
-    new_tree, _ = build_from_genes(new_gene)
-    random_x = np.random.choice(np.arange(WIDTH))
-    diff = random_x - tree.pos[0]
-    new_tree.shift_x_positions(diff)
+trees = []
+for i in range(N):
+    x = np.random.uniform(0, SIM_WIDTH)
+    new_tree = Tree((x, HEIGHT))
     trees.append(TreeSprite(new_tree))
 
 
-def get_fittest_trees(trees):
-    tree_list = []
-    for stree in trees:
-        sun = stree.calculate_sun(env.get_sun())
-        tree_list.append((sun, stree))
-
-    ordered_trees = sorted(tree_list, key=lambda x: x[0])[-(num_trees//2):]
-    return [stree for _,stree in ordered_trees]
+def get_fittest_trees(tree_list):
+    ordered_trees = sorted(tree_list, key=lambda tree: tree.calculate_sun(env.get_sun()))
+    return ordered_trees[-len(tree_list)//2:]
 
 
 # ======================================================================================================
@@ -52,12 +47,9 @@ running = True
 current_tree = None
 run_sim = False
 
-fittest_stree = get_fittest_trees(trees)
-fittest_gene = fittest_stree[0].root.genes
-fittest_tree, _ = build_from_genes(fittest_gene)
-fittest_dest = (FIT_WIDTH//2, FIT_HEIGHT-20)
-fittest_tree.shift_to_position(fittest_dest)
-
+fittest_tree = copy.deepcopy(get_fittest_trees(trees)[0].root)
+desired_fittest_pos = (FIT_WIDTH//2, FIT_HEIGHT)
+fittest_tree.shift_to_position(desired_fittest_pos)
 fittest_tree = TreeSprite(fittest_tree)
 
 while running:
@@ -85,26 +77,21 @@ while running:
     # Mutation loop
     if run_sim:
         fittest_trees = get_fittest_trees(trees)
-        del trees
-        trees = []
+        trees[:] = []
 
         for i, stree in enumerate(fittest_trees):
 
             if i == 0:
                 # Fittest tree
-                fittest_gene = stree.root.genes
-                fittest_tree, _ = build_from_genes(fittest_gene)
-                fittest_tree.shift_to_position(fittest_dest)
-
+                fittest_tree = copy.deepcopy(stree.root)
+                fittest_tree.shift_to_position(desired_fittest_pos)
                 fittest_tree = TreeSprite(fittest_tree)
 
             for j in range(2):
-                new_gene = stree.root.mutate_genes()
-                new_tree, _ = build_from_genes(new_gene)
-                random_x = np.random.choice(np.arange(WIDTH))
-                diff = random_x - stree.root.pos[0]
-                new_tree.shift_x_positions(diff)
-
+                x = np.random.uniform(0, SIM_WIDTH)
+                new_tree = copy.deepcopy(stree.root)
+                new_tree.shift_to_position((x, HEIGHT))
+                new_tree.mutate(1, mutation_rates)
                 trees.append(TreeSprite(new_tree))
 
     # 2 Update
