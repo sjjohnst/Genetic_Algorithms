@@ -25,9 +25,9 @@ BROWN = (139, 69, 19)
 BGR = (170, 170, 170)
 
 # Tree parameters
-snap_force = 20  # The force at which a branch will break (prevents over reaching structures)
+snap_force = 100  # The force at which a branch will break (prevents over reaching structures)
 
 # Mutation shifts
-position_shift_x = 10  # STD for normal distribution that shifts x / y values
-position_shift_y = 10
+position_shift_x = 15  # STD for normal distribution that shifts x / y values
+position_shift_y = 15
 

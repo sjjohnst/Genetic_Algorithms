@@ -22,11 +22,11 @@ def angle(pos1, pos2):
 
 class Tree:
 
-    def __init__(self, position):
+    def __init__(self, position, strength=30):
 
         self.x, self.y = position
+        self.strength = strength
         self.children = []
-        self.sunlight = 0
 
     def height(self):
         h = 1
@@ -34,13 +34,30 @@ class Tree:
             h += child.height()
         return h
 
+    def weight(self):
+        w = self.strength / 10
+        for child in self.children:
+            w += child.weight()
+        return w
+
     def pos(self):
         return (self.x, self.y)
 
     def add(self, pos):
         new_node = Tree(pos)
         self.children.append(new_node)
-        return new_node
+
+    def torque(self, child):
+        this_pos = (self.x, self.y)
+        child_pos = (child.x, child.y)
+        weight = child.height()
+        theta = angle(child_pos, this_pos)
+        length = magnitude(child_pos, this_pos)
+        torque = weight * length * math.cos(theta)
+        return torque
+
+    def break_branches(self):
+        self.children[:] = [child for child in self.children if self.torque(child) <= self.strength]
 
     def mutate(self, depth, mutation_rates):
         """
@@ -59,6 +76,7 @@ class Tree:
         pnn = ms * mutation_rates["p_new_node"]
         psx = ms * mutation_rates["p_shift_x"]
         psy = ms * mutation_rates["p_shift_y"]
+        pis = ms * mutation_rates["p_up_strength"]
 
         if decision(pnn):
             # Add a child to this node
@@ -77,18 +95,22 @@ class Tree:
 
         if decision(psx):
             self.x = np.random.normal(self.x, position_shift_x)
+            if self.x < 0:
+                self.x = 0
+            elif self.x > SIM_WIDTH:
+                self.x = SIM_WIDTH
 
         if decision(psy):
             self.y = np.random.normal(self.y, position_shift_x)
+            if self.y < 0:
+                self.y = 0
+            elif self.y > SIM_HEIGHT:
+                self.y = SIM_HEIGHT
 
-        if self.x < 0:
-            self.x = 0
-        elif self.x > SIM_WIDTH:
-            self.x = SIM_WIDTH
-        if self.y < 0:
-            self.y = 0
-        elif self.y > SIM_HEIGHT:
-            self.y = SIM_HEIGHT
+        if decision(pis):
+            self.strength = np.random.normal(self.strength, 10)
+            if self.strength < 1:
+                self.strength = 1
 
     def shift_x_positions(self, x):
         # update

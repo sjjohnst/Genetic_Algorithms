@@ -22,17 +22,19 @@ fittest.fill(BGR)
 # SETUP THE BACKEND SIMULATION
 env = Environment(SIM_WIDTH, SIM_HEIGHT, step=1)
 
-N = 100
+N = 50
 mutation_rates = {
     "p_new_node": 0.0002,
-    "p_shift_x": 0.008,
-    "p_shift_y": 0.008
+    "p_shift_x": 0.0007,
+    "p_shift_y": 0.0007,
+    "p_up_strength": 0.0005
 }
 
 trees = []
 for i in range(N):
     x = np.random.uniform(0, SIM_WIDTH)
     new_tree = Tree((x, HEIGHT))
+    new_tree.break_branches()
     trees.append(TreeSprite(new_tree))
 
 
@@ -92,6 +94,7 @@ while running:
                 new_tree = copy.deepcopy(stree.root)
                 new_tree.shift_to_position((x, HEIGHT))
                 new_tree.mutate(1, mutation_rates)
+                new_tree.break_branches()
                 trees.append(TreeSprite(new_tree))
 
     # 2 Update
