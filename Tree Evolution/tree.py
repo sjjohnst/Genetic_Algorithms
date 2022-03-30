@@ -1,11 +1,11 @@
+"""
+Tree data structure, defining node positions and mutation.
+"""
+
 import math
 import random
 import numpy as np
 from parameters import *
-
-"""
-Tree data structure, defining node positions and mutation.
-"""
 
 
 def decision(prob):
@@ -41,7 +41,7 @@ class Tree:
         return w
 
     def pos(self):
-        return (self.x, self.y)
+        return self.x, self.y
 
     def add(self, pos):
         new_node = Tree(pos)
