@@ -15,8 +15,8 @@ Each environment can contain any number of trees.
 class Environment:
 
     def __init__(self):
-        # Dictionary to hold the attached trees
-        self.trees = dict()
+        # List to hold the attached trees
+        self.trees = list()
 
         # Resource features are functions, where the input is position.
         # To account for resource competition, the update function will need to track
@@ -27,11 +27,14 @@ class Environment:
 
     def attach(self, tree):
         # Attach a new tree to the environment
-        pass
+        self.trees.append(tree)
+        # Add reference to environment into tree
 
     def detach(self, tree):
         # Detach a specific tree from the environment
-        pass
+        i = self.trees.index(tree)
+        self.trees.pop(i)
+        # Delete tree
 
     def update(self):
         # Update all the associated trees, taking into account competition
