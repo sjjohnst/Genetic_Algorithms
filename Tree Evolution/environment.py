@@ -11,11 +11,13 @@ such as when determining how many resources they collect on a given step.
 Each tree is associated with exactly one environment.
 Each environment can contain any number of trees.
 """
+from tree import Tree
+
 
 class Environment:
 
     def __init__(self):
-        # List to hold the attached trees
+        # List to hold trees
         self.trees = list()
 
         # Resource features are functions, where the input is position.
@@ -25,19 +27,28 @@ class Environment:
         self.water = None
         self.nutrients = None
 
-    def attach(self, tree):
-        # Attach a new tree to the environment
-        self.trees.append(tree)
-        # Add reference to environment into tree
+    def add_tree(self):
+        # Create a new tree object
+        new_tree = Tree(self)
+        self.trees.append(new_tree)
+        return new_tree
 
-    def detach(self, tree):
-        # Detach a specific tree from the environment
-        i = self.trees.index(tree)
-        self.trees.pop(i)
-        # Delete tree
+    def pop_tree(self):
+        # Removes the tree from the back of self.trees list
+        self.trees.pop(-1)
+
+    def plot(self, ax):
+
+        # Plot the environment stuff here
+        #
+        #
+        #
+
+        # Now add all the trees on top of the environment
+        for tree in self.trees:
+            tree.plot(ax)
 
     def update(self):
         # Update all the associated trees, taking into account competition
         # The environment can also be updated.
         pass
-

@@ -18,7 +18,10 @@ import numpy as np
 
 class Tree:
 
-    def __init__(self):
+    def __init__(self, environment):
+
+        # A tree can only be instantiated within an environment.
+        self.environment = environment
 
         # Vertices (V), Adjacency List (A), Features (F)
         self.V = list()
@@ -72,21 +75,22 @@ class Tree:
         Params:
             ax: A matplotlib axis to plot this tree onto
         """
-
+        # Turn Features matrix into an array of coordinates.
         # Feature matrix has len(V) and second dimension 2
         coords = np.array(self.F)
 
-        # Plot the vertices as blue points
-        ax.scatter(coords[:,0], coords[:,1], color='blue')
-
-        # Now plot all the edges.
+        # Plot edges first (branches)
         # Loop over all vertices and their neighbours in Adjacency matrix
         for v1, n in self.A.items():
             i1 = self.V.index(v1)
             for v2 in n:
                 i2 = self.V.index(v2)
                 edges = coords[[i1, i2], :]
-                ax.plot(edges[:, 0], edges[:, 1], color='orange')
+                ax.plot(edges[:, 0], edges[:, 1], color='brown', alpha=0.5, zorder=0)
+
+        # Now plot all vertices. (Leaves)
+        # Plot the vertices as blue points
+        ax.scatter(coords[:,0], coords[:,1], color='green', alpha=0.5, zorder=1)
 
     def step(self):
         # Do a tree state update
