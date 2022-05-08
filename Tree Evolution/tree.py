@@ -90,7 +90,7 @@ class Tree:
 
         # Now plot all vertices. (Leaves)
         # Plot the vertices as blue points
-        ax.scatter(coords[:,0], coords[:,1], color='green', alpha=0.5, zorder=1)
+        ax.scatter(coords[:,0], coords[:,1], color='green', alpha=1.0, zorder=1)
 
     def step(self):
         # Do a tree state update

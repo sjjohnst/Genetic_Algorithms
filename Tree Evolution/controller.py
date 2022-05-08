@@ -10,6 +10,8 @@ Handles overarching simulation variables and changes.
 The controller will handle reproduction and mutation of new trees at the end of a simulation cycle.
 Handles tree death if they die early.
 """
+import matplotlib.pyplot as plt
+
 from environment import Environment
 
 
@@ -23,19 +25,33 @@ class Controller:
         self.environments = dict()
 
     def new_environment(self, name):
-        # Break if name is invalid
         if name in self.environments.keys():
+            # Break if name is invalid
             print("Name provided is already associated with an environment.")
-        # Create the new environment and add to the dictionary
+
+            return None
+
         else:
-            new_env = Environment()
+            # Create the new environment and add to the dictionary
+            new_env = Environment(name)
             self.environments[name] = new_env
 
+            return new_env
+
     def remove_environment(self, name):
-        # Delete the environment
         if name in self.environments.keys():
+            # Delete the environment
             del self.environments[name]
-        # Can't find the environment
+        else:
+            # Can't find the environment
+            print("Could not find an environment associated with the provided name.")
+
+    def plot_environment(self, name):
+        if name in self.environments.keys():
+            fig = self.environments[name].update_plot()
+            fig.canvas.draw_idle()
+            fig.canvas.flush_events()
+            plt.pause(0.5)
         else:
             print("Could not find an environment associated with the provided name.")
 

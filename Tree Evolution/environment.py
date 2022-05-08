@@ -11,12 +11,14 @@ such as when determining how many resources they collect on a given step.
 Each tree is associated with exactly one environment.
 Each environment can contain any number of trees.
 """
+import matplotlib.pyplot as plt
+
 from tree import Tree
 
 
 class Environment:
 
-    def __init__(self):
+    def __init__(self, name):
         # List to hold trees
         self.trees = list()
 
@@ -26,6 +28,11 @@ class Environment:
         self.sunlight = None
         self.water = None
         self.nutrients = None
+
+        # Plotting variables
+        self.fig = plt.figure(figsize=(5, 5))
+        self.fig.suptitle(name)
+        self.ax = self.fig.gca()
 
     def add_tree(self):
         # Create a new tree object
@@ -37,7 +44,10 @@ class Environment:
         # Removes the tree from the back of self.trees list
         self.trees.pop(-1)
 
-    def plot(self, ax):
+    def update_plot(self):
+
+        # Clear the ax
+        self.ax.clear()
 
         # Plot the environment stuff here
         #
@@ -46,7 +56,9 @@ class Environment:
 
         # Now add all the trees on top of the environment
         for tree in self.trees:
-            tree.plot(ax)
+            tree.plot(self.ax)
+
+        return self.fig
 
     def update(self):
         # Update all the associated trees, taking into account competition
