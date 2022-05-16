@@ -48,10 +48,7 @@ class Controller:
 
     def plot_environment(self, name):
         if name in self.environments.keys():
-            fig = self.environments[name].update_plot()
-            fig.canvas.draw_idle()
-            fig.canvas.flush_events()
-            plt.pause(0.5)
+            self.environments[name].update_plot()
         else:
             print("Could not find an environment associated with the provided name.")
 

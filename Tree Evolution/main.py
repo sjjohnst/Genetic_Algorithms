@@ -1,7 +1,9 @@
-from tree import Tree
-from environment import Environment
+# from tree import Tree
+# from environment import Environment
 from controller import Controller
 import matplotlib.pyplot as plt
+
+plt.ion()
 
 controller = Controller()
 

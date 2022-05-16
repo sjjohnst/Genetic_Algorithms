@@ -30,9 +30,9 @@ class Environment:
         self.nutrients = None
 
         # Plotting variables
-        self.fig = plt.figure(figsize=(5, 5))
+        self.fig, self.ax = plt.subplots(figsize=(5, 5))
         self.fig.suptitle(name)
-        self.ax = self.fig.gca()
+        self.tree_plot = self.ax.scatter([], [])
 
     def add_tree(self):
         # Create a new tree object
@@ -58,7 +58,8 @@ class Environment:
         for tree in self.trees:
             tree.plot(self.ax)
 
-        return self.fig
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
     def update(self):
         # Update all the associated trees, taking into account competition
