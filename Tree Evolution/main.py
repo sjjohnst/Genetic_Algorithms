@@ -23,6 +23,8 @@ test_tree.add_vertex(3, [12, int(simulation_size[1]/cell_size)-1])
 test_tree.add_edge(3, 1)
 test_tree.add_edge(3, 0)
 
+scroll = 0.0
+
 running = True
 while running:
 
@@ -31,6 +33,20 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                scroll = -1.0
+            if event.key == pygame.K_LEFT:
+                scroll = 1.0
+
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_RIGHT:
+                scroll = 0.0
+            if event.key == pygame.K_LEFT:
+                scroll = 0.0
+
+    environment.offset += 5 * scroll
 
     controller.update()
     environment.update()

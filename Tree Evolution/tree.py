@@ -72,7 +72,7 @@ class Tree:
         else:
             self.A[v2] = [v1]
 
-    def plot(self, surf):
+    def plot(self, surf, offset=0):
         """
         Params:
             surf: a pygame surface to blit onto

@@ -34,12 +34,13 @@ class Environment:
         # Resource features are functions, where the input is position.
         # To account for resource competition, the update function will need to track
         # how the trees are trying to acquire resources.
-        self.sunlight = np.ones(simulation_size)
+        self.sunlight = np.ones((height, width))
         self.water = None
         self.nutrients = None
 
         # Plotting variables
         self.surf = pygame.Surface(simulation_size)
+        self.offset = 0
 
     def update(self):
         # Update all trees and the environment resources
@@ -52,7 +53,7 @@ class Environment:
         # Plot grid lines over all
         # Vertical bars
         for i in range(0, simulation_size[0]+cell_size, cell_size):
-            pygame.draw.rect(self.surf, GREY, (i, 0, 1, simulation_size[1]))
+            pygame.draw.rect(self.surf, GREY, (i+self.offset, 0, 1, simulation_size[1]))
 
         # Horizontal bars
         for i in range(0, simulation_size[1]+cell_size, cell_size):
@@ -60,7 +61,7 @@ class Environment:
 
         # Plot all the trees
         for tree in self.trees:
-            tree.plot(self.surf)
+            tree.plot(self.surf, self.offset)
 
     def add_tree(self):
         # Create a new tree object
