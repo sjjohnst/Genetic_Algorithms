@@ -11,28 +11,56 @@ such as when determining how many resources they collect on a given step.
 Each tree is associated with exactly one environment.
 Each environment can contain any number of trees.
 """
-import matplotlib.pyplot as plt
+import numpy as np
+import pygame
 
+from parameters import *
 from tree import Tree
 
 
 class Environment:
 
-    def __init__(self, name):
+    def __init__(self, height, width, name):
+        """
+        Params
+            height: The number of cells in the vertical dimension
+            width: The number of cells in the horizontal dimension
+            name: A unique id to differentiate environments
+        """
+
         # List to hold trees
         self.trees = list()
 
         # Resource features are functions, where the input is position.
         # To account for resource competition, the update function will need to track
         # how the trees are trying to acquire resources.
-        self.sunlight = None
+        self.sunlight = np.ones(simulation_size)
         self.water = None
         self.nutrients = None
 
         # Plotting variables
-        self.fig, self.ax = plt.subplots(figsize=(5, 5))
-        self.fig.suptitle(name)
-        self.tree_plot = self.ax.scatter([], [])
+        self.surf = pygame.Surface(simulation_size)
+
+    def update(self):
+        # Update all trees and the environment resources
+        # Base colour is white
+        self.surf.fill(WHITE)
+
+        # Then we plot a gradient based on the sunlight
+        pygame.surfarray.blit_array(self.surf, self.sunlight)
+
+        # Plot grid lines over all
+        # Vertical bars
+        for i in range(0, simulation_size[0]+cell_size, cell_size):
+            pygame.draw.rect(self.surf, GREY, (i, 0, 1, simulation_size[1]))
+
+        # Horizontal bars
+        for i in range(0, simulation_size[1]+cell_size, cell_size):
+            pygame.draw.rect(self.surf, GREY, (0, i, simulation_size[0], 1))
+
+        # Plot all the trees
+        for tree in self.trees:
+            tree.plot(self.surf)
 
     def add_tree(self):
         # Create a new tree object
@@ -43,25 +71,3 @@ class Environment:
     def pop_tree(self):
         # Removes the tree from the back of self.trees list
         self.trees.pop(-1)
-
-    def update_plot(self):
-
-        # Clear the ax
-        self.ax.clear()
-
-        # Plot the environment stuff here
-        #
-        #
-        #
-
-        # Now add all the trees on top of the environment
-        for tree in self.trees:
-            tree.plot(self.ax)
-
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-
-    def update(self):
-        # Update all the associated trees, taking into account competition
-        # The environment can also be updated.
-        pass

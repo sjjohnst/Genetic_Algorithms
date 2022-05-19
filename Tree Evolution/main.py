@@ -1,55 +1,41 @@
 # from tree import Tree
-# from environment import Environment
+from environment import Environment
+import pygame
 from controller import Controller
-import matplotlib.pyplot as plt
+from parameters import *
 
-plt.ion()
+pygame.init()
+screen = pygame.display.set_mode(screen_size)
+clock = pygame.time.Clock()
+
+pygame.display.set_caption("Tree Evolution")
+
+FPS = 60
 
 controller = Controller()
+environment = Environment(simulation_size[0], simulation_size[1], "env1")
 
-env = controller.new_environment("ENV")
+test_tree = environment.add_tree()
+test_tree.add_vertex(0, [10, 30])
+test_tree.add_vertex(1, [15, 33])
+test_tree.add_vertex(3, [12, int(simulation_size[1]/cell_size)-1])
 
-tree1 = env.add_tree()
-tree1.add_vertex(1, [1,3])
-tree1.add_vertex(2, [2,4])
-tree1.add_vertex(3, [1,2])
-tree1.add_vertex(4, [4,1])
-tree1.add_vertex(5, [3,3])
-tree1.add_edge(1,2)
-tree1.add_edge(1,3)
-tree1.add_edge(4,5)
-tree1.add_edge(3,4)
+test_tree.add_edge(3, 1)
+test_tree.add_edge(3, 0)
 
-controller.plot_environment("ENV")
-plt.pause(1.0)
+running = True
+while running:
 
-tree2 = env.add_tree()
-tree2.add_vertex(1, [4,1.5])
-tree2.add_vertex(2, [2,3.4])
-tree2.add_vertex(3, [1.2,1.5])
-tree2.add_vertex(4, [4.1,1])
-tree2.add_vertex(5, [1.2,2.6])
-tree2.add_edge(1,3)
-tree2.add_edge(1,5)
-tree2.add_edge(2,5)
-tree2.add_edge(3,4)
+    # 1 Process input/events
+    clock.tick(FPS)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
-controller.plot_environment("ENV")
-plt.pause(1.0)
+    controller.update()
+    environment.update()
+    screen.blit(controller.surf, controller_pos)
+    screen.blit(environment.surf, simulation_pos)
 
-env2 = controller.new_environment("ENV2")
-
-tree3 = tree1 = env2.add_tree()
-tree1.add_vertex(1, [1,3])
-tree1.add_vertex(2, [2,4])
-tree1.add_vertex(3, [1,2])
-tree1.add_vertex(4, [4,1])
-tree1.add_vertex(5, [3,3])
-tree1.add_edge(1,2)
-tree1.add_edge(1,3)
-tree1.add_edge(4,5)
-tree1.add_edge(3,4)
-
-controller.plot_environment("ENV2")
-plt.pause(1.0)
+    pygame.display.flip()
 

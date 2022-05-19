@@ -14,6 +14,8 @@ Trees also have a set of general traits, which are not associated with any speci
 
 """
 import numpy as np
+from parameters import *
+import pygame
 
 
 class Tree:
@@ -70,10 +72,10 @@ class Tree:
         else:
             self.A[v2] = [v1]
 
-    def plot(self, ax):
+    def plot(self, surf):
         """
         Params:
-            ax: A matplotlib axis to plot this tree onto
+            surf: a pygame surface to blit onto
         """
         # Turn Features matrix into an array of coordinates.
         # Feature matrix has len(V) and second dimension 2
@@ -83,14 +85,16 @@ class Tree:
         # Loop over all vertices and their neighbours in Adjacency matrix
         for v1, n in self.A.items():
             i1 = self.V.index(v1)
+            point1 = coords[i1]*cell_size + 0.5*cell_size
             for v2 in n:
                 i2 = self.V.index(v2)
-                edges = coords[[i1, i2], :]
-                ax.plot(edges[:, 0], edges[:, 1], color='brown', alpha=0.5, zorder=0)
+                point2 = coords[i2]*cell_size + 0.5*cell_size
+                pygame.draw.line(surf, BROWN, point1, point2, 3)
 
         # Now plot all vertices. (Leaves)
         # Plot the vertices as blue points
-        ax.scatter(coords[:,0], coords[:,1], color='green', alpha=1.0, zorder=1)
+        for coord in coords:
+            pygame.draw.rect(surf, GREEN, (coord[0]*cell_size, coord[1]*cell_size, cell_size, cell_size))
 
     def step(self):
         # Do a tree state update
