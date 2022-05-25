@@ -5,7 +5,8 @@ Stores constants for the simulation
 # Colours
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-GREY = (70, 70, 70)
+BLACK_A = (0, 0, 0, 0.1)
+GREY = (70, 70, 70, 0.25)
 GREEN = (5, 135, 45)
 BROWN = (75, 45, 10)
 

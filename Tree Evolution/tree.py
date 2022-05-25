@@ -85,16 +85,23 @@ class Tree:
         # Loop over all vertices and their neighbours in Adjacency matrix
         for v1, n in self.A.items():
             i1 = self.V.index(v1)
-            point1 = coords[i1]*cell_size + 0.5*cell_size
+            point1 = (coords[i1] + 0.5)*cell_size
+            x1 = point1[0] + offset*cell_size
+            y1 = self.environment.height*cell_size - point1[1]
             for v2 in n:
                 i2 = self.V.index(v2)
-                point2 = coords[i2]*cell_size + 0.5*cell_size
-                pygame.draw.line(surf, BROWN, point1, point2, 3)
+                point2 = (coords[i2] + 0.5)*cell_size
+                x2 = point2[0] + offset * cell_size
+                y2 = self.environment.height*cell_size - point2[1]
+                pygame.draw.line(surf, BROWN, (x1, y1), (x2, y2), 3)
 
         # Now plot all vertices. (Leaves)
-        # Plot the vertices as blue points
+        # Plot the vertices as green points
         for coord in coords:
-            pygame.draw.rect(surf, GREEN, (coord[0]*cell_size, coord[1]*cell_size, cell_size, cell_size))
+            # Use the offset to update the coordinate
+            x = coord[0] + offset
+            y = self.environment.height - coord[1] - 1
+            pygame.draw.rect(surf, GREEN, (x*cell_size, y*cell_size, cell_size, cell_size))
 
     def step(self):
         # Do a tree state update
