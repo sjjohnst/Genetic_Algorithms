@@ -16,6 +16,13 @@ Trees also have a set of general traits, which are not associated with any speci
 import numpy as np
 from parameters import *
 import pygame
+import copy
+
+
+def flip(p):
+    # Flip a coin with probability p of heads
+    # Return True if heads, False if tails
+    return np.random.uniform(0,1) <= p
 
 
 class Tree:
@@ -127,6 +134,21 @@ class Tree:
         pass
 
     def reproduce(self):
-        # Create new genetics and return
-        pass
+        """
+        Create a copy of this tree, and modify its structure slightly (mutation)
+        """
+        child = copy.deepcopy(self)
 
+        # Add vertex
+        if flip(0.2):
+            pass
+
+        # Add edge
+        if flip(0.1):
+            pass
+
+        # Modify vertex positions
+        if flip(0.1):
+            pass
+
+        return child

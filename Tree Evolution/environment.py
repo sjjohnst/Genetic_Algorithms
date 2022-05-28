@@ -49,8 +49,9 @@ class Environment:
 
         # Where to blit the surface within the simulation window
         self.pos = (0, simulation_size[1]-self.height*cell_size)
-        # self.offset = 0
-        # self.zoom = 0
+
+        # Determines the zoom level of the environment
+        self.zoom = 0
 
     def update(self):
         """

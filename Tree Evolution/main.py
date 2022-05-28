@@ -17,17 +17,10 @@ controller = Controller()
 environment = Environment(100, 60, "env1")
 
 environment.zoom = 1
-#
-# test_tree = environment.add_tree()
-# test_tree.add_vertex(0, [10, 3])
-# test_tree.add_vertex(1, [15, 6])
-# test_tree.add_vertex(3, [12, 0])
-#
-# test_tree.add_edge(3, 1)
-# test_tree.add_edge(3, 0)
 
 environment.init_population(10)
 
+scroll_speed = 1
 scroll_x = 0
 scroll_y = 0
 zoom = 0
@@ -46,13 +39,13 @@ while running:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
-                scroll_x = -2
+                scroll_x = -scroll_speed
             if event.key == pygame.K_LEFT:
-                scroll_x = 2
+                scroll_x = scroll_speed
             if event.key == pygame.K_UP:
-                scroll_y = 2
+                scroll_y = scroll_speed
             if event.key == pygame.K_DOWN:
-                scroll_y = -2
+                scroll_y = -scroll_speed
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_RIGHT:
