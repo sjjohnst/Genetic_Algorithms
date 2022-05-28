@@ -20,7 +20,12 @@ import pygame
 
 class Tree:
 
-    def __init__(self, environment):
+    def __init__(self, environment, origin=(0, 0)):
+        """
+        Params:
+            environment: The Environment instance that holds this tree
+            origin (optional): The position of the trees 'root' vertex. Default is (0,0).
+        """
 
         # A tree can only be instantiated within an environment.
         self.environment = environment
@@ -29,6 +34,10 @@ class Tree:
         self.V = list()
         self.A = dict()
         self.F = list()
+
+        # Initialize a basic tree, single vertex.
+        # original vertex has id = 0, and position of origin
+        self.add_vertex(0, origin)
 
         # Status variables
         # self.sun = 0

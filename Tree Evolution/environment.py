@@ -53,7 +53,10 @@ class Environment:
         # self.zoom = 0
 
     def update(self):
-        # Update all trees and the environment resources
+        """
+        Function to update the environment display. Reblits everything.
+        """
+
         # Base colour is white
         self.surf.fill(WHITE)
 
@@ -75,8 +78,11 @@ class Environment:
             pygame.draw.rect(self.surf, BLACK_A, (0, i*cell_size, self.width*cell_size, 1))
 
     def scroll(self, shift_x, shift_y):
-        # Handle updating the blit position of this environment.
-        # Does not re-blit anything, just changes position.
+        """
+        Updates the blit position of this environment, in accordance with current scrolling.
+        User will attempt to scroll in main.py, and this function handles how this affects
+        the displaying of the environment.
+        """
 
         pos_x, pos_y = self.pos
 
@@ -90,18 +96,27 @@ class Environment:
 
         self.pos = (pos_x, pos_y)
 
-    def add_tree(self):
-        # Create a new tree object
-        new_tree = Tree(self)
+    def init_population(self, pop_size):
+        """
+        Initialize a new population of random trees.
+        """
+        assert pop_size > -1
+        for i in range(pop_size):
+            rand_x = np.random.randint(0, self.width-1)
+            self.add_tree([rand_x, 0])
+
+    def add_tree(self, origin):
+        """
+        Instantiate and then add a tree to this environment. Root positioned at 'origin'
+        """
+        new_tree = Tree(self, origin)
         self.trees.append(new_tree)
         return new_tree
 
-    def pop_tree(self):
-        # Removes the tree from the back of self.trees list
-        self.trees.pop(-1)
-
     def _init_sun(self):
-        # Create sunlight gradient
+        """
+        Creates a numpy matrix representing the sunlight value at each cell in the environment.
+        """
         base_sun = np.ones((self.width, self.height, 3)) * 255
         grad_sun = np.ones_like(base_sun)
 
@@ -111,5 +126,5 @@ class Environment:
 
         f = 0.6
         grad_sun[:, int(f*self.height):, :] = grad_sun[:, int(f*self.height):int(f*self.height) + 1, :]
-        print(grad_sun[:, :, 0])
+        # print(grad_sun[:, :, 0])
         return grad_sun

@@ -14,17 +14,19 @@ pygame.display.set_caption("Tree Evolution")
 FPS = 60
 
 controller = Controller()
-environment = Environment(200, 60, "env1")
+environment = Environment(100, 60, "env1")
 
 environment.zoom = 1
+#
+# test_tree = environment.add_tree()
+# test_tree.add_vertex(0, [10, 3])
+# test_tree.add_vertex(1, [15, 6])
+# test_tree.add_vertex(3, [12, 0])
+#
+# test_tree.add_edge(3, 1)
+# test_tree.add_edge(3, 0)
 
-test_tree = environment.add_tree()
-test_tree.add_vertex(0, [10, 3])
-test_tree.add_vertex(1, [15, 6])
-test_tree.add_vertex(3, [12, 0])
-
-test_tree.add_edge(3, 1)
-test_tree.add_edge(3, 0)
+environment.init_population(10)
 
 scroll_x = 0
 scroll_y = 0
