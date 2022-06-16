@@ -20,6 +20,11 @@ environment.zoom = 1
 
 environment.init_population(10)
 
+t = environment.trees[0]
+t.add_vertex((10, 10))
+t.add_edge(0, 1)
+t.add_leaf(0)
+
 scroll_speed = 1
 scroll_x = 0
 scroll_y = 0

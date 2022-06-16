@@ -11,8 +11,8 @@ Each vertex will be given a unique id, in order to differentiate them.
 Apart from the id, tree vertices will have other associated features,
 which affect how the tree fares in the simulated environment.
 Trees also have a set of general traits, which are not associated with any specific vertices.
-
 """
+
 import numpy as np
 from parameters import *
 import pygame
@@ -37,76 +37,87 @@ class Tree:
         # A tree can only be instantiated within an environment.
         self.environment = environment
 
-        # Vertices (V), Adjacency List (A), Features (F)
-        self.V = list()
-        self.A = dict()
+        # Adjacency List (A), Features (F)
+        self.Adj = list()
+        self.A = list()
         self.F = list()
+
+        # Genetics
+        d = 5  # number of features
+        e = 5  # number of possible decisions
+        self.W1 = np.random.randn(d, e)
+        self.W2 = np.random.randn(e, 1)
 
         # Initialize a basic tree, single vertex.
         # original vertex has id = 0, and position of origin
-        self.add_vertex(0, origin)
+        self.add_vertex(origin)
 
-        # Status variables
-        # self.sun = 0
-        # self.energy = 0
-        #
-        # # General Traits: Genes (G)
-        # self.G = np.array()
-        # self.mutation_rate = None
-
-    def add_vertex(self, v, f):
+    def add_vertex(self, pos):
         """
+        Adds a new vertex, with default features f: [x,y,strength,sunlight,stored energy]
         Params
-            v: vertex id
-            f: vertex features, shape: (2) for (x,y)
+            pos: vertex position (x,y)
         """
 
-        assert len(f) == 2
+        assert len(pos) == 2
 
-        if v in self.V:
-            print("Vertex already exists: %d" % v)
+        # Add a new empty list to the adjacency list
+        self.Adj.append(list())
 
-        else:
-            self.V.append(v)
-            self.F.append(f)
+        # Create default feature list, [x,y,strength,sunlight,stored energy]
+        features = [pos[0], pos[1], 1, 0, 0]
+        self.F.append(features)
 
     def add_edge(self, v1, v2):
         """
+        Adds an edge between vertex v1 and v2
         Params
-            v1: vertex id 1
-            v2: vertex id 2
+            v1: vertex index 1
+            v2: vertex index 2
         """
-        assert v1 in self.V and v2 in self.V
 
-        if v1 in self.A:
-            self.A[v1].append(v2)
-        else:
-            self.A[v1] = [v2]
+        # Assert that both indices provided are in range
+        assert v1 < len(self.Adj) and v2 < len(self.Adj)
 
-        if v2 in self.A:
-            self.A[v2].append(v1)
-        else:
-            self.A[v2] = [v1]
+        # Add edges v1 <-> v2 to Adjacency list
+        self.Adj[v1].append(v2)
+        self.Adj[v2].append(v1)
+
+    def add_leaf(self, v):
+        """
+        Adds a new node, and connects it to node v.
+        Params
+            v: the parent node to add a leaf to
+        """
+
+        # Assert its a valid index
+        assert v < len(self.F)
+
+        n = len(self.F)
+
+        # The leafs position will be same as v_pos, but with y+1
+        l_pos = (self.F[v][0], self.F[v][1]+1)
+
+        # Now add a new vertex, then a leaf
+        self.add_vertex(l_pos)
+        self.add_edge(v, n)
 
     def plot(self, surf, offset=0):
         """
         Params:
             surf: a pygame surface to blit onto
         """
-        # Turn Features matrix into an array of coordinates.
-        # Feature matrix has len(V) and second dimension 2
-        coords = np.array(self.F)
+        # Extract coordinates from the feature matrix
+        coords = np.array(self.F)[:,:2]
 
         # Plot edges first (branches)
         # Loop over all vertices and their neighbours in Adjacency matrix
-        for v1, n in self.A.items():
-            i1 = self.V.index(v1)
-            point1 = (coords[i1] + 0.5)*cell_size
+        for v1, n in enumerate(self.Adj):
+            point1 = (coords[v1] + 0.5)*cell_size
             x1 = point1[0] + offset*cell_size
             y1 = self.environment.height*cell_size - point1[1]
             for v2 in n:
-                i2 = self.V.index(v2)
-                point2 = (coords[i2] + 0.5)*cell_size
+                point2 = (coords[v2] + 0.5)*cell_size
                 x2 = point2[0] + offset * cell_size
                 y2 = self.environment.height*cell_size - point2[1]
                 pygame.draw.line(surf, BROWN, (x1, y1), (x2, y2), 3)
