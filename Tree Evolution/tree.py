@@ -24,6 +24,11 @@ def flip(p):
     # Return True if heads, False if tails
     return np.random.uniform(0,1) <= p
 
+def softmax(X):
+    expo = np.exp(X)
+    expo_sum = np.sum(np.exp(X), axis=1)
+    return expo / expo_sum[:,None]
+
 
 class Tree:
 
@@ -37,16 +42,18 @@ class Tree:
         # A tree can only be instantiated within an environment.
         self.environment = environment
 
-        # Adjacency List (A), Features (F)
+        # Adjacency List (Adj), Adjacency Matrix (A), Features (F)
         self.Adj = list()
         self.A = list()
+
+        # Features: [x, y, strength, sunlight, stored energy]
         self.F = list()
 
         # Genetics
-        d = 5  # number of features
-        e = 5  # number of possible decisions
-        self.W1 = np.random.randn(d, e)
-        self.W2 = np.random.randn(e, 1)
+        self.d = 5  # number of features
+        self.e = 5  # number of possible decisions
+        self.W1 = np.random.randn(self.d, self.e)
+        self.W2 = np.random.randn(self.d, self.e)
 
         # Initialize a basic tree, single vertex.
         # original vertex has id = 0, and position of origin
@@ -131,9 +138,8 @@ class Tree:
             pygame.draw.rect(surf, GREEN, (x*cell_size, y*cell_size, cell_size, cell_size))
 
     def step(self):
-        # Do a tree state update
         """
-        The genes G as well as status variables are used to determine
+        The genes W as well as status variables are used to determine
         how the tree behaves in this step.
 
         The tree can do a number of actions:
@@ -142,7 +148,55 @@ class Tree:
             - Strengthen a leaf
             - ETC
         """
-        pass
+
+        # Convert the adjacency list into a numpy adjacency matrix
+        V = len(self.Adj)
+        self.A = self._convert_adj(self.Adj)
+
+        # Add the identity to add self connections
+        A = np.asarray(self.A)
+        A = A + np.identity(A.shape[0])
+
+        # Convert the feature matrix into a numpy array
+        F = np.asarray(self.F)
+
+        # Pass through the MLPs. Matrix multiplication is associative.
+        Y = np.matmul(A, np.matmul(F, self.W1))
+        Z = np.matmul(A, np.matmul(F, self.W2))
+
+        # Apply activation function
+        Y = softmax(Y)
+        Z = np.tanh(Z)
+
+        # Use Y for decision
+        for v in range(V):
+            # Use the probabilistic distribution of this row to select an action (a)
+            a = np.random.choice(self.e, p=Y[v])
+
+            # Get the factor f, located at vertex v, action a, from the Z matrix
+            f = Z[v,a]
+
+            # Perform action (a) on vertex (v) in helper function, by factor f
+            self.execute(v, a, f)
+
+    def execute(self, v, a, f):
+        """
+        Performs action a on vertex v, by factor f
+        Params:
+            v: index of vertex.
+            a: action id.
+            f: Some actions require a factor. f is 'quantity' of change.
+        """
+        # Features: [x, y, strength, sunlight, stored energy]
+        if 3 > a >= 0:
+            # Change feature x,y,or strength by factor f
+            self.F[v][a] += round(f)
+        elif a == 3:
+            # Add a child to the node
+            self.add_leaf(v)
+        else:
+            # Invalid
+            pass
 
     def reproduce(self):
         """
@@ -163,3 +217,25 @@ class Tree:
             pass
 
         return child
+
+    def _convert_adj(self, Adj):
+        """
+        Converts adjacency list into adjacency matrix
+        Params:
+            Adj: The adjacency list. A python list of lists
+        """
+
+        # The number of vertices V, will always be length of Adj
+        # Enforced because we have no 'floating' leaves
+        V = len(Adj)
+
+        # Initialize a matrix of zeros, shape (V,V)
+        matrix = [[0 for j in range(V)]
+                  for i in range(V)]
+
+        # Add a 1 to every entry where an edge exists
+        for i in range(V):
+            for j in Adj[i]:
+                matrix[i][j] = 1
+
+        return matrix
