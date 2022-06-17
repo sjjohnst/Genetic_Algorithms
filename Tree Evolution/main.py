@@ -14,16 +14,12 @@ pygame.display.set_caption("Tree Evolution")
 FPS = 60
 
 controller = Controller()
-environment = Environment(100, 60, "env1")
+environment = Environment(60, 40, "env1")
 
 environment.zoom = 1
-
 environment.init_population(10)
 
 t = environment.trees[0]
-t.add_vertex((10, 10))
-t.add_edge(0, 1)
-t.add_leaf(0)
 
 scroll_speed = 1
 scroll_x = 0
@@ -67,6 +63,9 @@ while running:
 
     # Handle scrolling around the simulation window
     environment.scroll(scroll_x, scroll_y)
+
+    # Update all the trees
+    environment.update()
 
     # Blit the environment onto the simulation surface
     sim_surf.blit(environment.surf, environment.pos)

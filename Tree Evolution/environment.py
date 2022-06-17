@@ -65,9 +65,10 @@ class Environment:
         sunlight_pixels = np.repeat(np.repeat(self.sunlight, cell_size, axis=0), cell_size, axis=1)
         pygame.surfarray.blit_array(self.surf, sunlight_pixels)
 
-        # Plot all the trees
+        # Plot all the trees, do a step
         for tree in self.trees:
             tree.plot(self.surf)
+            tree.step()
 
         # Plot grid lines over all
         # Vertical bars
