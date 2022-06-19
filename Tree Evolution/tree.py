@@ -24,6 +24,7 @@ def flip(p):
     # Return True if heads, False if tails
     return np.random.uniform(0,1) <= p
 
+
 def softmax(X):
     expo = np.exp(X)
     expo_sum = np.sum(np.exp(X), axis=1)
@@ -104,10 +105,29 @@ class Tree:
 
         # The leafs position will be same as v_pos, but with y+1
         l_pos = (self.F[v][0], self.F[v][1]+1)
+        if not self._pos_available(l_pos[0], l_pos[1]):
+            return
 
         # Now add a new vertex, then a leaf
         self.add_vertex(l_pos)
         self.add_edge(v, n)
+
+    def _pos_available(self, x, y):
+        """
+        Queries the environment, checks if a grid position is available
+        Params:
+            x,y
+        """
+
+        # First check if this tree occupies the position
+        coords = np.asarray(self.F)[:, :2]
+        if [x,y] in coords:
+            return False
+
+        # Now check against the other trees
+
+        # If all checks pass, return True
+        return True
 
     def plot(self, surf, offset=0):
         """
