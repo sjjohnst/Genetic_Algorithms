@@ -68,7 +68,6 @@ class Environment:
         # Plot all the trees, do a step
         for tree in self.trees:
             tree.plot(self.surf)
-            tree.step()
 
         # Plot grid lines over all
         # Vertical bars
@@ -78,6 +77,11 @@ class Environment:
         # Horizontal bars
         for i in range(0, self.height):
             pygame.draw.rect(self.surf, BLACK_A, (0, i*cell_size, self.width*cell_size, 1))
+
+    def step(self):
+        """ Perform a simulation step """
+        for tree in self.trees:
+            tree.step()
 
     def scroll(self, shift_x, shift_y):
         """

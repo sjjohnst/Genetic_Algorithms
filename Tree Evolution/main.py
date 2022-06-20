@@ -14,7 +14,7 @@ pygame.display.set_caption("Tree Evolution")
 FPS = 60
 
 controller = Controller()
-environment = Environment(60, 40, "env1")
+environment = Environment(60, 60, "env1")
 
 environment.zoom = 1
 environment.init_population(10)
@@ -30,6 +30,7 @@ controller.update()
 environment.update()
 
 running = True
+pause = True
 while running:
 
     # 1 Process input/events
@@ -47,6 +48,8 @@ while running:
                 scroll_y = scroll_speed
             if event.key == pygame.K_DOWN:
                 scroll_y = -scroll_speed
+            if event.key == pygame.K_SPACE:
+                pause = not pause
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_RIGHT:
@@ -66,6 +69,8 @@ while running:
 
     # Update all the trees
     environment.update()
+    if not pause:
+        environment.step()
 
     # Blit the environment onto the simulation surface
     sim_surf.blit(environment.surf, environment.pos)

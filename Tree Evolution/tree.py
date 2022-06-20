@@ -112,23 +112,6 @@ class Tree:
         self.add_vertex(l_pos)
         self.add_edge(v, n)
 
-    def _pos_available(self, x, y):
-        """
-        Queries the environment, checks if a grid position is available
-        Params:
-            x,y
-        """
-
-        # First check if this tree occupies the position
-        coords = np.asarray(self.F)[:, :2]
-        if [x,y] in coords:
-            return False
-
-        # Now check against the other trees
-
-        # If all checks pass, return True
-        return True
-
     def plot(self, surf, offset=0):
         """
         Params:
@@ -259,3 +242,21 @@ class Tree:
                 matrix[i][j] = 1
 
         return matrix
+
+    def _pos_available(self, x, y):
+        """
+        Queries the environment, checks if a grid position is available
+        Params:
+            x,y
+        """
+
+        # First check if this tree occupies the position
+        coords = np.asarray(self.F)[:, :2]
+        if [x,y] in coords:
+            return False
+
+        # Now check against the other trees
+
+        # If all checks pass, return True
+        return True
+
