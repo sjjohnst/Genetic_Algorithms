@@ -161,6 +161,7 @@ class Tree:
 
         # Convert the feature matrix into a numpy array
         F = np.asarray(self.F)
+        F = (F - F.min()) / (F.max() - F.min())
 
         # Pass through the MLPs. Matrix multiplication is associative.
         Y = np.matmul(A, np.matmul(F, self.W1))
