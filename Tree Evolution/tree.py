@@ -25,10 +25,9 @@ def flip(p):
     return np.random.uniform(0,1) <= p
 
 
-def softmax(X):
-    expo = np.exp(X)
-    expo_sum = np.sum(np.exp(X), axis=1)
-    return expo / expo_sum[:,None]
+def softmax(x):
+    f = np.exp(x - np.max(x))  # shift values
+    return f / f.sum(axis=0)
 
 
 class Tree:
@@ -104,8 +103,8 @@ class Tree:
         n = len(self.F)
 
         # The leafs position will be same as v_pos, but with y+1
-        l_pos = (self.F[v][0], self.F[v][1]+1)
-        if not self._pos_available(l_pos[0], l_pos[1]):
+        l_pos = [self.F[v][0], self.F[v][1]+1]
+        if not self._pos_available(l_pos):
             return
 
         # Now add a new vertex, then a leaf
@@ -168,16 +167,21 @@ class Tree:
         Z = np.matmul(A, np.matmul(F, self.W2))
 
         # Apply activation function
-        Y = softmax(Y)
         Z = np.tanh(Z)
 
         # Use Y for decision
         for v in range(V):
-            # Use the probabilistic distribution of this row to select an action (a)
-            a = np.random.choice(self.e, p=Y[v])
+            # For the first vertex (the root), cannot shift x or y
+            if v == 0:
+                a = np.random.choice(self.e-2, p=softmax(Y[v, 2:]))
+                a += 2
+
+            else:
+                # Use the probabilistic distribution of this row to select an action (a)
+                a = np.random.choice(self.e, p=softmax(Y[v]))
 
             # Get the factor f, located at vertex v, action a, from the Z matrix
-            f = Z[v,a]
+            f = Z[v, a]
 
             # Perform action (a) on vertex (v) in helper function, by factor f
             self.execute(v, a, f)
@@ -243,16 +247,16 @@ class Tree:
 
         return matrix
 
-    def _pos_available(self, x, y):
+    def _pos_available(self, pos):
         """
         Queries the environment, checks if a grid position is available
         Params:
-            x,y
+            pos: [x,y]
         """
 
         # First check if this tree occupies the position
-        coords = np.asarray(self.F)[:, :2]
-        if [x,y] in coords:
+        coords = [f[:2] for f in self.F]
+        if pos in coords:
             return False
 
         # Now check against the other trees

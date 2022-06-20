@@ -34,15 +34,16 @@ class Environment:
         self.height = height
         self.name = name
 
-        # List to hold trees
-        self.trees = list()
-
         # Resource features are functions, where the input is position.
         # To account for resource competition, the update function will need to track
         # how the trees are trying to acquire resources.
         self.sunlight = self._init_sun()
         self.water = None
         self.nutrients = None
+
+        # List to hold trees
+        self.trees = list()
+        self.tiles = np.zeros_like(self.sunlight)
 
         # Plotting variables
         self.surf = pygame.Surface((width*cell_size, height*cell_size))
