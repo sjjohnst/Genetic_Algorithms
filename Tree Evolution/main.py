@@ -1,34 +1,34 @@
-# from tree import Tree
 from environment import Environment
+from view import EnvView
 import pygame
 from controller import Controller
 from parameters import *
 
+# Initialize pygame and the scree surface
 pygame.init()
 screen = pygame.display.set_mode(screen_size)
 sim_surf = pygame.Surface(simulation_size)
 clock = pygame.time.Clock()
 
+FPS = 60
 pygame.display.set_caption("Tree Evolution")
 
-FPS = 60
+# Instantiate Environment
+env = Environment(60, 60)
 
-controller = Controller()
-environment = Environment(60, 40, "env1")
+# Initialize population
+env.init_population(10)
 
-environment.zoom = 1
-environment.init_population(1)
+# Test environment
+print("Pop size:", env.get_population())
+print("Height: %d   Width: %d" % (env.height, env.width))
+print("Cell (4,0): ", env.get_cell(4, 0))
+print("Sun (2,5): ", env.get_sun(9, 5))
 
-t = environment.trees[0]
+# Add a view
+view = EnvView(600, 600, 11, env)
 
-scroll_speed = 1
-scroll_x = 0
-scroll_y = 0
-zoom = 0
-
-controller.update()
-environment.update()
-
+# Pygame code
 running = True
 pause = True
 while running:
@@ -39,45 +39,10 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                scroll_x = -scroll_speed
-            if event.key == pygame.K_LEFT:
-                scroll_x = scroll_speed
-            if event.key == pygame.K_UP:
-                scroll_y = scroll_speed
-            if event.key == pygame.K_DOWN:
-                scroll_y = -scroll_speed
-            if event.key == pygame.K_SPACE:
-                pause = not pause
-
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_RIGHT:
-                scroll_x = 0
-            if event.key == pygame.K_LEFT:
-                scroll_x = 0
-            if event.key == pygame.K_UP:
-                scroll_y = 0
-            if event.key == pygame.K_DOWN:
-                scroll_y = 0
-
-    # environment.offset += scroll
-    # environment.zoom = max(environment.zoom + zoom, 0)
-
-    # Handle scrolling around the simulation window
-    environment.scroll(scroll_x, scroll_y)
-
-    # Update all the trees
-    environment.update()
-    if not pause:
-        environment.step()
-
-    # Blit the environment onto the simulation surface
-    sim_surf.blit(environment.surf, environment.pos)
-
     # Blit the simulation surface onto the game window, then blit the controller.
     screen.blit(sim_surf, simulation_pos)
-    screen.blit(controller.surf, controller_pos)
+    view.display()
+    screen.blit(view.surf, view.pos)
 
     pygame.display.flip()
 

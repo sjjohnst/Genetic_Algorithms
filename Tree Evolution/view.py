@@ -28,12 +28,12 @@ class CntrView:
 
 class EnvView:
 
-    def __init__(self, height, width, cell_size, env):
+    def __init__(self, width, height, cell_size, env):
         """
         Params
-            height: The number of pixels in height
             width: The number of pixels in width
-            cell_size: The size in pixels of an environment cells
+            height: The number of pixels in height
+            cell_size: The size in pixels of an environment cell
             env: The environment model instance to observe
         """
 
@@ -52,63 +52,44 @@ class EnvView:
         # Where to blit the surface within the simulation window. Default is (0,0)
         self.pos = (0, 0)
 
+    # Receive notification of event from observed
     def notify(self, event):
-        """
-        Receive a notification of event from model or controller
-        """
-        ## Handle event(s)
+        # Handle event(s)
         pass
 
+    # Blit everything to the surface
     def display(self):
         # Base colour is white
-        self.surf.fill(WHITE)
+        self.surf.fill(BLACK)
 
-        # Use getter to retrieve data from environment model
-        # Nodes: list of numpy arrays, each of shape (N,2)
-        # Edges: list of Adjacency lists
-        sunlight, nodes, edges = self.env.get_state()
+        # Retrieve data from the environment
+        sun = self.env.sun
+        cells = self.env.env
 
-        # For each cell, pad out to be the size of a cell
-        sunlight_pixels = np.repeat(np.repeat(sunlight, self.cell_size, axis=0), self.cell_size, axis=1)
-        pygame.surfarray.blit_array(self.surf, sunlight_pixels)
+        # For each cell of the environment, blit a rectangle representing its value(s)
+        for y in range(self.env.height):
+            for x in range(self.env.width):
 
-        # Plot grid lines over all
-        # Vertical bars
-        for i in range(0, self.env.width):
-            pygame.draw.rect(self.surf, BLACK_A, (i * self.cell_size, 0, 1, self.env.height * self.cell_size))
+                # No leaf at (x,y)
+                if self.env.get_cell(x, y) is None:
+                    # Plot sunlight
+                    value = sun[y, x]
+                    rgb = (value * 255, value*255, value*255)
 
-        # Horizontal bars
-        for i in range(0, self.env.height):
-            pygame.draw.rect(self.surf, BLACK_A, (0, i * self.cell_size, self.env.width * self.cell_size, 1))
+                # There is a leaf at (x,y)
+                else:
+                    rgb = GREEN
 
-        # Plot all the nodes
-        # Condense the list of arrays into one large array
-        for coord in np.asarray(nodes):
-            x = coord[0]
-            y = self.env.height - coord[1] - 1
-            pygame.draw.rect(self.surf, GREEN, (x * self.cell_size, y * self.cell_size, self.cell_size, self.cell_size))
+                self.blit_cell([x, y], rgb)
 
-        # Plot all the edges
-        # For each Adjacency list
-        for t, Adj in enumerate(edges):
-            seen = []
+    # Base function to blit a cell at pos, with rbg value provided
+    def blit_cell(self, pos, rbg):
+        # Convert the cell position to pixel position
+        x = pos[0] * self.cell_size
+        y = self.height - self.cell_size - pos[1] * self.cell_size
 
-            # Plot all edges contained in the adjacency list
-            for v1, n in enumerate(Adj):
-                point1 = (nodes[t][v1] + 0.5) * self.cell_size
-                x1 = point1[0]
-                y1 = self.env.height * self.cell_size - point1[1]
+        # Blit the rbg as square
+        pygame.draw.rect(self.surf, rbg, pygame.Rect(x, y, self.cell_size, self.cell_size))
 
-                for v2 in n:
-                    # Pass if duplicate edge
-                    if {v1, v2} in seen:
-                        pass
-
-                    # Plot the edge
-                    point2 = (nodes[t][v2] + 0.5) * self.cell_size
-                    x2 = point2[0]
-                    y2 = self.env.height * self.cell_size - point2[1]
-                    pygame.draw.line(self.surf, BROWN, (x1, y1), (x2, y2), 5)
-
-                    # Add to seen list
-                    seen.append({v1, v2})
+        # Adds a blue border to the cells
+        pygame.draw.rect(self.surf, BLUE, pygame.Rect(x, y, self.cell_size, self.cell_size), 1)

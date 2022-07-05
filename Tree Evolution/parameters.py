@@ -7,8 +7,9 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 BLACK_A = (0, 0, 0, 0.1)
 GREY = (70, 70, 70, 0.25)
-GREEN = (5, 135, 45)
+GREEN = (5, 135, 75)
 BROWN = (75, 45, 10)
+BLUE = (25, 25, 80)
 
 # Display sizes
 screen_size = (600, 600)

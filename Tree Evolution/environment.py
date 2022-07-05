@@ -1,15 +1,15 @@
 """
-Date: May 1st 2022
+Date: July 5th 2022
 Author: Sam Johnston
 
 Environment Class
-An environment is a class that holds tree instances.
+An environment is a class that holds organism instances.
 An environment has a set of features, such as sunlight, topology, hydrology, etc..
-The trees interact with their associated environment,
+The organisms interact with their associated environment,
 such as when determining how many resources they collect on a given step.
 
 Each tree is associated with exactly one environment.
-Each environment can contain any number of trees.
+Each environment can contain any number of organisms.
 """
 
 import numpy as np
@@ -21,12 +21,11 @@ from tree import Tree
 
 class Environment:
 
-    def __init__(self, width, height, name):
+    def __init__(self, width, height):
         """
         Params
             height: The number of cells in the vertical dimension
             width: The number of cells in the horizontal dimension
-            name: A unique id to differentiate environments
         """
 
         # Observer list. Holds references to observers for notifying of updates.
@@ -35,19 +34,31 @@ class Environment:
         # Store args
         self.width = width
         self.height = height
-        self.name = name
+
+        self.time, self.env, self.sun, self.orgs = None, None, None, None
+        self.initialize()
+
+    # Initialize environment base
+    def initialize(self):
+        """
+        Initialize the environment with base features
+        """
+        # The number of time steps run.
+        self.time = 0
+
+        # The environment is an empty space of cells.
+        # These cells are filled by vertices of the trees.
+        self.env = [[None for x in range(self.width)] for y in range(self.height)]
 
         # Resource features are functions, where the input is position.
         # To account for resource competition, the update function will need to track
         # how the trees are trying to acquire resources.
-        self.sunlight = self._init_sun()
-        self.water = None
-        self.nutrients = None
+        self.sun = self._init_sun()
 
-        # List to hold trees
-        self.trees = list()
-        self.tiles = np.zeros_like(self.sunlight)
+        # Dictionary (hash map) to store organisms
+        self.orgs = dict()
 
+    # Attach a new observer
     def attach(self, view):
         """
         Params
@@ -55,6 +66,7 @@ class Environment:
         """
         self.observers.append(view)
 
+    # Notify all observers of event
     def notify(self, event):
         """
         Notify all observers of an update in the data
@@ -62,71 +74,81 @@ class Environment:
         for observer in self.observers:
             observer.notify(event)
 
-    def get_state(self):
+    # Check if position falls within environment grid
+    def in_bound(self, x, y):
+        return 0 <= x < self.width and 0 <= y < self.height
+
+    # Return the number of organisms within the environment
+    def get_population(self):
+        return len(self.orgs)
+
+    # Return the sun value at input position
+    def get_sun(self, x, y):
+        # Assert position in bounds
+        if not self.in_bound(x,y):
+            return None
+
+        return self.sun[y][x]
+
+    # Return the value in self.env at input position
+    def get_cell(self, x, y):
+        if not self.in_bound(x, y):
+            return None
+
+        return self.env[y][x]
+
+    # Instantiate a new organism, positioned at argument 'pos', and finally add to organism list
+    def add_organism(self, x, y):
+        # Check position is available
+        if not (self.in_bound(x, y) and self.get_cell(x, y) is None):
+            return
+
+        # Create a new organism (a Tree in this case)
+        org = Tree(self, x, y)
+
+        # Get a hash value for the organism instance
+        key = hash(org)
+
+        # If key is present, rehash until available key is found
+        while key in self.orgs.keys():
+            key += 1
+
+        # Finally, insert (key,value) into the hashmap, and update the environment to contain leaf at position
+        self.orgs[key] = org
+        self.env[y][x] = key
+
+    # Initialize a new population of random organisms
+    def init_population(self, size):
         """
-        Return relevant data to the caller (View).
+        Initialize a new population of randomized organisms.
         """
-        nodes = []
-        edges = []
-        for tree in self.trees:
-            nodes.append(np.asarray(tree.F)[:,:2])
-            edges.append(tree.Adj)
+        # Find all available tiles in the bottom row of the environment
+        bot_row = self.env[-1]
+        available = []
+        for x, v in enumerate(bot_row):
+            if v is None:
+                available.append(x)
 
-        return self.sunlight, nodes, edges
+        # Select 'size' positions from above (if possible)
+        size = min(size, len(available))
+        x_positions = np.random.choice(available, size, replace=False)
 
-    def step(self):
-        """ Perform a simulation step """
-        for tree in self.trees:
-            tree.step()
+        for x in x_positions:
+            self.add_organism(x, 0)
 
-    def scroll(self, shift_x, shift_y):
-        """
-        Updates the blit position of this environment, in accordance with current scrolling.
-        User will attempt to scroll in main.py, and this function handles how this affects
-        the displaying of the environment.
-        """
-
-        pos_x, pos_y = self.pos
-
-        pos_x = min(0, pos_x+shift_x)
-        pos_y = min(0, pos_y+shift_y)
-
-        if pos_x < 0:
-            pos_x = max(simulation_size[0]-self.width*cell_size, pos_x+shift_x)
-        if pos_y < 0:
-            pos_y = max(simulation_size[1]-self.height*cell_size, pos_y+shift_y)
-
-        self.pos = (pos_x, pos_y)
-
-    def add_tree(self, origin):
-        """
-        Instantiate and then add a tree to this environment. Root positioned at 'origin'
-        """
-        new_tree = Tree(self, origin)
-        self.trees.append(new_tree)
-        return new_tree
-
-    def init_population(self, pop_size):
-        """
-        Initialize a new population of random trees.
-        """
-        assert pop_size > -1
-        for i in range(pop_size):
-            rand_x = np.random.randint(0, self.width-1)
-            self.add_tree([rand_x, 0])
-
+    # Initialize the sun resource as a numpy array, with custom distribution
     def _init_sun(self):
         """
         Creates a numpy matrix representing the sunlight value at each cell in the environment.
         """
-        base_sun = np.ones((self.width, self.height, 3)) * 255
+        base_sun = np.ones((self.height, self.width))
         grad_sun = np.ones_like(base_sun)
 
         # Modify the sunlight of each row according to height
         for i in range(self.height):
-            grad_sun[:, self.height-i-1, :] = base_sun[:, i, :] * (i/self.height)
+            grad_sun[i, :] = base_sun[i, :] * ((i+1)/self.height)
 
-        f = 0.6
-        grad_sun[:, int(f*self.height):, :] = grad_sun[:, int(f*self.height):int(f*self.height) + 1, :]
-        # print(grad_sun[:, :, 0])
+        f = 0.2
+        # Create a base sunlight level for all heights below a threshold of 'f' percent
+        grad_sun[:int(f*self.height), :] = grad_sun[int(f*self.height):int(f*self.height) + 1, :]
         return grad_sun

@@ -1,5 +1,5 @@
 """
-Date: May 1st 2022
+Date: July 5th 2022
 Author: Sam Johnston
 
 Tree class definition.
@@ -32,11 +32,12 @@ def softmax(x):
 
 class Tree:
 
-    def __init__(self, environment, origin=(0, 0)):
+    def __init__(self, environment, x, y):
         """
         Params:
             environment: The Environment instance that holds this tree
-            origin (optional): The position of the trees 'root' vertex. Default is (0,0).
+            x: the trees x position
+            y: the trees y position
         """
 
         # A tree can only be instantiated within an environment.
@@ -57,7 +58,13 @@ class Tree:
 
         # Initialize a basic tree, single vertex.
         # original vertex has id = 0, and position of origin
-        self.add_vertex(origin)
+        self.add_vertex((x, y))
+
+    def __eq__(self, other):
+        return self.W1 == other.W1 and self.W2 == other.W2
+
+    def __hash__(self):
+        return hash(self.W1.sum() + self.W2.sum())
 
     def add_vertex(self, pos):
         """
@@ -110,26 +117,6 @@ class Tree:
         # Now add a new vertex, then a leaf
         self.add_vertex(l_pos)
         self.add_edge(v, n)
-
-    def plot(self, surf, offset=0):
-        """
-        Params:
-            surf: a pygame surface to blit onto
-        """
-        # Extract coordinates from the feature matrix
-        coords = np.array(self.F)[:,:2]
-
-        # Plot edges first (branches)
-        # Loop over all vertices and their neighbours in Adjacency matrix
-
-
-        # Now plot all vertices. (Leaves)
-        # Plot the vertices as green points
-        for coord in coords:
-            # Use the offset to update the coordinate
-            x = coord[0] + offset
-            y = self.environment.height - coord[1] - 1
-            pygame.draw.rect(surf, GREEN, (x*cell_size, y*cell_size, cell_size, cell_size))
 
     def step(self):
         """
@@ -239,21 +226,3 @@ class Tree:
                 matrix[i][j] = 1
 
         return matrix
-
-    def _pos_available(self, pos):
-        """
-        Queries the environment, checks if a grid position is available
-        Params:
-            pos: [x,y]
-        """
-
-        # First check if this tree occupies the position
-        coords = [f[:2] for f in self.F]
-        if pos in coords:
-            return False
-
-        # Now check against the other trees
-
-        # If all checks pass, return True
-        return True
-
