@@ -18,5 +18,3 @@ controller_pos = (0, 0)
 
 simulation_size = (600, 400)
 simulation_pos = (0, controller_size[1])
-
-cell_size = 10

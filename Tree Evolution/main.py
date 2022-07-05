@@ -14,10 +14,10 @@ pygame.display.set_caption("Tree Evolution")
 FPS = 60
 
 controller = Controller()
-environment = Environment(60, 60, "env1")
+environment = Environment(60, 40, "env1")
 
 environment.zoom = 1
-environment.init_population(10)
+environment.init_population(1)
 
 t = environment.trees[0]
 

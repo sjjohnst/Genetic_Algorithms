@@ -121,15 +121,7 @@ class Tree:
 
         # Plot edges first (branches)
         # Loop over all vertices and their neighbours in Adjacency matrix
-        for v1, n in enumerate(self.Adj):
-            point1 = (coords[v1] + 0.5)*cell_size
-            x1 = point1[0] + offset*cell_size
-            y1 = self.environment.height*cell_size - point1[1]
-            for v2 in n:
-                point2 = (coords[v2] + 0.5)*cell_size
-                x2 = point2[0] + offset * cell_size
-                y2 = self.environment.height*cell_size - point2[1]
-                pygame.draw.line(surf, BROWN, (x1, y1), (x2, y2), 3)
+
 
         # Now plot all vertices. (Leaves)
         # Plot the vertices as green points

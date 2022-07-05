@@ -29,6 +29,9 @@ class Environment:
             name: A unique id to differentiate environments
         """
 
+        # Observer list. Holds references to observers for notifying of updates.
+        self.observers = list()
+
         # Store args
         self.width = width
         self.height = height
@@ -45,39 +48,31 @@ class Environment:
         self.trees = list()
         self.tiles = np.zeros_like(self.sunlight)
 
-        # Plotting variables
-        self.surf = pygame.Surface((width*cell_size, height*cell_size))
-
-        # Where to blit the surface within the simulation window
-        self.pos = (0, simulation_size[1]-self.height*cell_size)
-
-        # Determines the zoom level of the environment
-        self.zoom = 0
-
-    def update(self):
+    def attach(self, view):
         """
-        Function to update the environment display. Reblits everything.
+        Params
+            view: The view instance which is observing this model.
         """
+        self.observers.append(view)
 
-        # Base colour is white
-        self.surf.fill(WHITE)
+    def notify(self, event):
+        """
+        Notify all observers of an update in the data
+        """
+        for observer in self.observers:
+            observer.notify(event)
 
-        # For each cell, pad out to be the size of a cell
-        sunlight_pixels = np.repeat(np.repeat(self.sunlight, cell_size, axis=0), cell_size, axis=1)
-        pygame.surfarray.blit_array(self.surf, sunlight_pixels)
-
-        # Plot all the trees, do a step
+    def get_state(self):
+        """
+        Return relevant data to the caller (View).
+        """
+        nodes = []
+        edges = []
         for tree in self.trees:
-            tree.plot(self.surf)
+            nodes.append(np.asarray(tree.F)[:,:2])
+            edges.append(tree.Adj)
 
-        # Plot grid lines over all
-        # Vertical bars
-        for i in range(0, self.width):
-            pygame.draw.rect(self.surf, BLACK_A, (i*cell_size, 0, 1, self.height*cell_size))
-
-        # Horizontal bars
-        for i in range(0, self.height):
-            pygame.draw.rect(self.surf, BLACK_A, (0, i*cell_size, self.width*cell_size, 1))
+        return self.sunlight, nodes, edges
 
     def step(self):
         """ Perform a simulation step """
@@ -103,6 +98,14 @@ class Environment:
 
         self.pos = (pos_x, pos_y)
 
+    def add_tree(self, origin):
+        """
+        Instantiate and then add a tree to this environment. Root positioned at 'origin'
+        """
+        new_tree = Tree(self, origin)
+        self.trees.append(new_tree)
+        return new_tree
+
     def init_population(self, pop_size):
         """
         Initialize a new population of random trees.
@@ -111,14 +114,6 @@ class Environment:
         for i in range(pop_size):
             rand_x = np.random.randint(0, self.width-1)
             self.add_tree([rand_x, 0])
-
-    def add_tree(self, origin):
-        """
-        Instantiate and then add a tree to this environment. Root positioned at 'origin'
-        """
-        new_tree = Tree(self, origin)
-        self.trees.append(new_tree)
-        return new_tree
 
     def _init_sun(self):
         """
