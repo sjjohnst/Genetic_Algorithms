@@ -17,5 +17,5 @@ screen_size = (600, 600)
 controller_size = (600, 200)
 controller_pos = (0, 0)
 
-simulation_size = (600, 400)
-simulation_pos = (0, controller_size[1])
+env_size = (600, 400)
+env_pos = (0, controller_size[1])

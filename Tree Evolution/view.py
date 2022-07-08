@@ -28,13 +28,13 @@ class CntrView:
 
 class EnvView:
 
-    def __init__(self, width, height, cell_size, env):
+    def __init__(self, env, width, height, cell_size):
         """
         Params
+            env: The environment model instance to observe
             width: The number of pixels in width
             height: The number of pixels in height
             cell_size: The size in pixels of an environment cell
-            env: The environment model instance to observe
         """
 
         # Display attributes
@@ -47,24 +47,26 @@ class EnvView:
         self.env.attach(self)
 
         # Plotting variables
-        self.surf = pygame.Surface((width, height))
+        self.surf = pygame.Surface((self.env.width*cell_size, self.env.height*cell_size))
 
-        # Where to blit the surface within the simulation window. Default is (0,0)
-        self.pos = (0, 0)
+        # The models can be displayed offset from the window.
+        # Offset defines where on the full surface the bottom left corner of the window should reside.
+        self.offset = [0, 0]
+        self.zoom = 1
 
     # Receive notification of event from observed
     def notify(self, event):
         # Handle event(s)
         pass
 
+    # Return the subsurface, which is an offset/zoomed window of the full display
+    def get_window(self):
+        return pygame.transform.smoothscale(self.surf, (self.width, self.height))
+
     # Blit everything to the surface
     def display(self):
         # Base colour is white
-        self.surf.fill(BLACK)
-
-        # Retrieve data from the environment
-        sun = self.env.sun
-        cells = self.env.env
+        self.surf.fill(BROWN)
 
         # For each cell of the environment, blit a rectangle representing its value(s)
         for y in range(self.env.height):
@@ -73,7 +75,7 @@ class EnvView:
                 # No leaf at (x,y)
                 if self.env.get_cell(x, y) is None:
                     # Plot sunlight
-                    value = sun[y, x]
+                    value = self.env.sun[y, x]
                     rgb = (value * 255, value*255, value*255)
 
                 # There is a leaf at (x,y)
@@ -86,10 +88,24 @@ class EnvView:
     def blit_cell(self, pos, rbg):
         # Convert the cell position to pixel position
         x = pos[0] * self.cell_size
-        y = self.height - self.cell_size - pos[1] * self.cell_size
+        y = (self.env.height - 1 - pos[1]) * self.cell_size
 
         # Blit the rbg as square
         pygame.draw.rect(self.surf, rbg, pygame.Rect(x, y, self.cell_size, self.cell_size))
 
         # Adds a blue border to the cells
         pygame.draw.rect(self.surf, BLUE, pygame.Rect(x, y, self.cell_size, self.cell_size), 1)
+
+    # Update the offset position given scroll_x, scroll_y
+    def scroll(self, scroll_x, scroll_y):
+        self.offset = [self.offset[0] + scroll_x, self.offset[1] + scroll_y]
+
+        self.offset[0] = max(0, self.offset[0])
+        self.offset[0] = min(self.env.width*self.cell_size-self.width, self.offset[0])
+
+        self.offset[1] = max(0, self.offset[1])
+        self.offset[1] = min(self.env.height*self.cell_size-self.height, self.offset[1])
+
+    # Update the zoom variable by zoom_f
+    def zoom(self, zoom_f):
+        self.zoom += zoom_f
