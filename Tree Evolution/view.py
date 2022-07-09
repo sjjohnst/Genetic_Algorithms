@@ -28,46 +28,76 @@ class CntrView:
 
 class EnvView:
 
-    def __init__(self, env, width, height, cell_size):
+    def __init__(self, env, display_surface):
         """
         Params
             env: The environment model instance to observe
-            width: The number of pixels in width
-            height: The number of pixels in height
-            cell_size: The size in pixels of an environment cell
+            display_surface: the pygame surface on which to blit this environment view
         """
 
+        self.cell_size = 20
+        self.keyboard_speed = 5
+
         # Display attributes
-        self.height = height
-        self.width = width
-        self.cell_size = cell_size
+        self.display_surface = display_surface
+        self.internal_surface = pygame.Surface((env.width*self.cell_size, env.height*self.cell_size))
+
+        # Camera offset
+        self.offset = pygame.math.Vector2()
+        self.offset.y = self.display_surface.get_size()[1] - self.internal_surface.get_size()[1]
+        self.half_w = self.display_surface.get_size()[0] // 2
+        self.half_h = self.display_surface.get_size()[1] // 2
 
         # Attach the model object, and then have the model attach a reference to this view
         self.env = env
         self.env.attach(self)
-
-        # Plotting variables
-        self.surf = pygame.Surface((self.env.width*cell_size, self.env.height*cell_size))
-
-        # The models can be displayed offset from the window.
-        # Offset defines where on the full surface the bottom left corner of the window should reside.
-        self.offset = [0, 0]
-        self.zoom = 1
 
     # Receive notification of event from observed
     def notify(self, event):
         # Handle event(s)
         pass
 
-    # Return the subsurface, which is an offset/zoomed window of the full display
-    def get_window(self):
-        return pygame.transform.smoothscale(self.surf, (self.width, self.height))
+    # Updates offset using keyboard input
+    def keyboard_control(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]: self.offset.x += self.keyboard_speed
+        if keys[pygame.K_RIGHT]: self.offset.x -= self.keyboard_speed
+        if keys[pygame.K_UP]: self.offset.y += self.keyboard_speed
+        if keys[pygame.K_DOWN]: self.offset.y -= self.keyboard_speed
+
+    def constrain_offset(self):
+
+        display_width = self.display_surface.get_size()[0]
+        display_height = self.display_surface.get_size()[1]
+
+        intern_width = self.internal_surface.get_size()[0]
+        intern_height = self.internal_surface.get_size()[1]
+
+        if self.offset.x > 0:
+            self.offset.x = 0
+        elif self.offset.x < display_width - intern_width:
+            self.offset.x = display_width - intern_width
+
+        if self.offset.y < display_height - intern_height:
+            self.offset.y = display_height - intern_height
+        elif self.offset.y > 0:
+            self.offset.y = 0
+
+        if intern_width < display_width:
+            self.offset.x = (display_width - intern_width) // 2
+
+        if intern_height < display_height:
+            self.offset.y = (display_height - intern_height) // 2
+
+    # Blit surface to display
+    def draw(self):
+        self.keyboard_control()
+        self.constrain_offset()
+        self.display_surface.fill(BROWN)
+        self.display_surface.blit(self.internal_surface, self.offset)
 
     # Blit everything to the surface
-    def display(self):
-        # Base colour is white
-        self.surf.fill(BROWN)
-
+    def update(self):
         # For each cell of the environment, blit a rectangle representing its value(s)
         for y in range(self.env.height):
             for x in range(self.env.width):
@@ -91,21 +121,8 @@ class EnvView:
         y = (self.env.height - 1 - pos[1]) * self.cell_size
 
         # Blit the rbg as square
-        pygame.draw.rect(self.surf, rbg, pygame.Rect(x, y, self.cell_size, self.cell_size))
+        pygame.draw.rect(self.internal_surface, rbg, pygame.Rect(x, y, self.cell_size, self.cell_size))
 
         # Adds a blue border to the cells
-        pygame.draw.rect(self.surf, BLUE, pygame.Rect(x, y, self.cell_size, self.cell_size), 1)
+        pygame.draw.rect(self.internal_surface, BLUE, pygame.Rect(x, y, self.cell_size, self.cell_size), 1)
 
-    # Update the offset position given scroll_x, scroll_y
-    def scroll(self, scroll_x, scroll_y):
-        self.offset = [self.offset[0] + scroll_x, self.offset[1] + scroll_y]
-
-        self.offset[0] = max(0, self.offset[0])
-        self.offset[0] = min(self.env.width*self.cell_size-self.width, self.offset[0])
-
-        self.offset[1] = max(0, self.offset[1])
-        self.offset[1] = min(self.env.height*self.cell_size-self.height, self.offset[1])
-
-    # Update the zoom variable by zoom_f
-    def zoom(self, zoom_f):
-        self.zoom += zoom_f
