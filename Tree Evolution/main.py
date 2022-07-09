@@ -13,7 +13,7 @@ FPS = 60
 pygame.display.set_caption("Tree Evolution")
 
 # Instantiate Environment
-env = Environment(12, 10)
+env = Environment(100, 50)
 
 # Initialize population
 env.init_population(10)
@@ -41,10 +41,12 @@ while running:
             running = False
 
     clock.tick(60)
-    print(clock.get_fps())
+    # print(clock.get_fps())
 
     view.draw()
     screen.blit(env_surface, env_pos)
+
+    # print(view.offset)
 
     pygame.display.update()
 
