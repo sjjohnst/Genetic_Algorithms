@@ -43,8 +43,10 @@ class EnvView:
         self.env = env
         self.env.attach(self)
 
-        # Display attributes
+        # Surfaces
         self.display_surface = display_surface
+        self.env_surface = pygame.Surface((env.width*self.cell_size, env.height*self.cell_size))
+        self.env_rect = self.env_surface.get_rect(topleft=(0, 0))
 
         # Camera offset
         self.offset = pygame.math.Vector2()
@@ -53,7 +55,7 @@ class EnvView:
 
         # Zoom
         self.zoom_scale = 1.0
-        self.internal_surf_size = (env.width*self.cell_size, env.height*self.cell_size)
+        self.internal_surf_size = (2400, 1600)
         self.internal_surf = pygame.Surface(self.internal_surf_size)
         self.internal_surf_rect = self.internal_surf.get_rect(center=(self.half_w, self.half_h))
         self.internal_surf_size_vector = pygame.math.Vector2(self.internal_surf_size)
@@ -61,8 +63,7 @@ class EnvView:
         self.internal_offset.x = self.internal_surf_size[0] // 2 - self.half_w
         self.internal_offset.y = self.internal_surf_size[1] // 2 - self.half_h
 
-        # Start with display at bottom left corner
-        self.offset.y = self.display_surface.get_size()[1] - self.internal_surf.get_size()[1]
+        self.min_zoom = max(2*self.half_w/self.env_rect.width, 2*self.half_h/self.env_rect.height)
 
     # Receive notification of event from observed
     def notify(self, event):
@@ -79,27 +80,26 @@ class EnvView:
 
     # Keeps offset within defined boundaries
     def constrain_offset(self):
-        display_width = self.display_surface.get_size()[0]
-        display_height = self.display_surface.get_size()[1]
+        # Get offset as position relative to center screen, after scaling
+        x_pos = (self.offset.x - self.half_w) * self.zoom_scale
+        y_pos = (self.offset.y - self.half_h) * self.zoom_scale
 
-        intern_width = self.internal_surf_size[0]
-        intern_height = self.internal_surf_size[1]
+        # Get the height and width of the environment surface after scaling
+        scaled_width = self.env_rect.width * self.zoom_scale
+        scaled_height = self.env_rect.height * self.zoom_scale
 
-        if self.offset.x > 0:
-            self.offset.x = 0
-        elif self.offset.x < display_width - intern_width:
-            self.offset.x = display_width - intern_width
+        # pass
+        if x_pos > -self.half_w:
+            x_pos = -self.half_w
+        elif x_pos + scaled_width < self.half_w:
+            x_pos = self.half_w - scaled_width
+        if y_pos > -self.half_h:
+            y_pos = -self.half_h
+        elif y_pos + scaled_height < self.half_h:
+            y_pos = self.half_h - scaled_height
 
-        if self.offset.y < display_height - intern_height:
-            self.offset.y = display_height - intern_height
-        elif self.offset.y > 0:
-            self.offset.y = 0
-
-        if intern_width < display_width:
-            self.offset.x = (display_width - intern_width) // 2
-
-        if intern_height < display_height:
-            self.offset.y = (display_height - intern_height) // 2
+        self.offset.x = (x_pos / self.zoom_scale) + self.half_w
+        self.offset.y = (y_pos / self.zoom_scale) + self.half_h
 
     # Updates zoom using keyboard input
     def zoom_keyboard_control(self):
@@ -109,6 +109,9 @@ class EnvView:
         if keys[pygame.K_e]:
             self.zoom_scale += 0.1
 
+        self.zoom_scale = max(self.min_zoom, self.zoom_scale)
+        # self.zoom_scale = min(1.25, self.zoom_scale)
+
     # Blit surface to display
     def draw(self):
         self.keyboard_control()
@@ -116,11 +119,14 @@ class EnvView:
 
         self.constrain_offset()
 
-        self.display_surface.fill(BROWN)
-        scaled_surf = pygame.transform.scale(self.internal_surf, self.internal_surf_size_vector * self.zoom_scale)
-        scaled_rect = scaled_surf.get_rect(center=(self.half_w, self.half_h))
+        self.display_surface.fill(BLUE)
+        self.internal_surf.fill(BROWN)
 
-        scaled_rect = scaled_rect.topleft + self.offset
+        env_offset = self.internal_offset + self.offset
+        self.internal_surf.blit(self.env_surface, env_offset)
+
+        scaled_surf = pygame.transform.scale(self.internal_surf, self.internal_surf_size_vector*self.zoom_scale)
+        scaled_rect = scaled_surf.get_rect(center=(self.half_w, self.half_h))
 
         self.display_surface.blit(scaled_surf, scaled_rect)
 
@@ -149,8 +155,8 @@ class EnvView:
         y = (self.env.height - 1 - pos[1]) * self.cell_size
 
         # Blit the rbg as square
-        pygame.draw.rect(self.internal_surf, rbg, pygame.Rect(x, y, self.cell_size, self.cell_size))
+        pygame.draw.rect(self.env_surface, rbg, pygame.Rect(x, y, self.cell_size, self.cell_size))
 
         # Adds a blue border to the cells
-        pygame.draw.rect(self.internal_surf, BLUE, pygame.Rect(x, y, self.cell_size, self.cell_size), 1)
+        pygame.draw.rect(self.env_surface, BLUE, pygame.Rect(x, y, self.cell_size, self.cell_size), 1)
 
