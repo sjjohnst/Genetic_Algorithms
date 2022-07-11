@@ -13,9 +13,6 @@ Each environment can contain any number of organisms.
 """
 
 import numpy as np
-import pygame
-
-from parameters import *
 from tree import Tree
 
 
@@ -85,7 +82,7 @@ class Environment:
     # Return the sun value at input position
     def get_sun(self, x, y):
         # Assert position in bounds
-        if not self.in_bound(x,y):
+        if not self.in_bound(x, y):
             return None
 
         return self.sun[y][x]
@@ -93,7 +90,7 @@ class Environment:
     # Return the value in self.env at input position
     def get_cell(self, x, y):
         if not self.in_bound(x, y):
-            return None
+            return False
 
         return self.env[y][x]
 

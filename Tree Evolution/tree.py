@@ -14,8 +14,6 @@ Trees also have a set of general traits, which are not associated with any speci
 """
 
 import numpy as np
-from parameters import *
-import pygame
 import copy
 
 
@@ -41,7 +39,7 @@ class Tree:
         """
 
         # A tree can only be instantiated within an environment.
-        self.environment = environment
+        self.env = environment
 
         # Adjacency List (Adj), Adjacency Matrix (A), Features (F)
         self.Adj = list()
@@ -60,12 +58,15 @@ class Tree:
         # original vertex has id = 0, and position of origin
         self.add_vertex((x, y))
 
+    # Equality operator to compare two trees in the environment
     def __eq__(self, other):
         return self.W1 == other.W1 and self.W2 == other.W2
 
+    # Hash function so that environment can map leaves to tree instances
     def __hash__(self):
         return hash(self.W1.sum() + self.W2.sum())
 
+    # Add a new vertex at position (pos)
     def add_vertex(self, pos):
         """
         Adds a new vertex, with default features f: [x,y,strength,sunlight,stored energy]
@@ -82,6 +83,7 @@ class Tree:
         features = [pos[0], pos[1], 1, 0, 0]
         self.F.append(features)
 
+    # Add an edge between vertex v1 and v2
     def add_edge(self, v1, v2):
         """
         Adds an edge between vertex v1 and v2
@@ -97,6 +99,7 @@ class Tree:
         self.Adj[v1].append(v2)
         self.Adj[v2].append(v1)
 
+    # Add a leaf node directly above parent v
     def add_leaf(self, v):
         """
         Adds a new node, and connects it to node v.
@@ -118,11 +121,9 @@ class Tree:
         self.add_vertex(l_pos)
         self.add_edge(v, n)
 
+    # Perform a simulation step; Make decisions and perform actions for this time step.
     def step(self):
         """
-        The genes W as well as status variables are used to determine
-        how the tree behaves in this step.
-
         The tree can do a number of actions:
             - Grow a new leaf
             - Extend a branch
@@ -166,9 +167,9 @@ class Tree:
             # Perform action (a) on vertex (v) in helper function, by factor f
             self.execute(v, a, f)
 
+    # Perform action a on vertex v, by factor f
     def execute(self, v, a, f):
         """
-        Performs action a on vertex v, by factor f
         Params:
             v: index of vertex.
             a: action id.
@@ -185,6 +186,7 @@ class Tree:
             # Invalid
             pass
 
+    # Create an offspring from tree
     def reproduce(self):
         """
         Create a copy of this tree, and modify its structure slightly (mutation)
@@ -205,6 +207,7 @@ class Tree:
 
         return child
 
+    # Convert adjacency list to adjacency matrix
     def _convert_adj(self, Adj):
         """
         Converts adjacency list into adjacency matrix
@@ -226,3 +229,7 @@ class Tree:
                 matrix[i][j] = 1
 
         return matrix
+
+    # Return true if environment cell at 'pos' is empty, false otherwise
+    def _pos_available(self, pos):
+        return self.env.get_cell(pos[0], pos[1]) is None

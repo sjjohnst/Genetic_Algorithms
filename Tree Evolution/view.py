@@ -5,9 +5,7 @@ Author: Sam Johnston
 Viewport class
 The viewport maps the data of the model (environment) onto the screen.
 """
-import numpy as np
 import pygame
-
 from parameters import *
 
 
