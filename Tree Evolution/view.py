@@ -53,6 +53,9 @@ class EnvView:
         self.half_w = self.display_surface.get_size()[0] // 2
         self.half_h = self.display_surface.get_size()[1] // 2
 
+        # position at bottom left corner
+        self.offset.y = 2*self.half_h - self.env_rect.height
+
         # Zoom
         self.zoom_scale = 1.0
         self.internal_surf_size = (2400, 1600)

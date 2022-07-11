@@ -13,10 +13,10 @@ FPS = 60
 pygame.display.set_caption("Tree Evolution")
 
 # Instantiate Environment
-env = Environment(100, 50)
+env = Environment(200, 60)
 
 # Initialize population
-env.init_population(10)
+env.init_population(20)
 
 # Test environment
 # print("Pop size:", env.get_population())
