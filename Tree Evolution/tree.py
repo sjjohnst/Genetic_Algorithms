@@ -151,9 +151,6 @@ class Tree:
             v2: vertex index 2 (child)
         """
 
-        # Assert that both indices provided are in range
-        assert v1 < len(self.Adj) and v2 < len(self.Adj)
-
         # Add edges v1 <-> v2 to Adjacency list
         self.Adj[v1].append(v2)
         self.Adj[v2].append(v1)
@@ -161,10 +158,52 @@ class Tree:
         # Need to update number of children feature for parent and all ancestors
         # Number of children is feature at index 3
         ancestors = []
-        dfs(self.Adj, ancestors, self.root, v2)
+        dfs(self.Adj, ancestors, self.root, v1)
 
         for a in ancestors:
             self.F[a][3] += 1
+
+    # Remove a vertex and all its children from the tree
+    def delete_vertex(self, v):
+        """
+        v: the vertex id to delete
+        """
+
+        # First, find the node of question
+        seq = []
+        dfs(self.Adj, seq, self.root, v)
+
+        if len(seq) == 0:
+            # Node not found
+            return
+
+        # Recursively delete all children of this vertex
+        children = self.Adj[v]
+        for c in children:
+            # For now, skip parent
+            if c in seq:
+                continue
+            # Else, recursively delete nodes down the tree
+            else:
+                self.delete_vertex(c)
+
+        # Get number of children of this node
+        num_children = self.F[v][3] + 1
+
+        # Update the num children feature of all ancestors
+        for a in seq:
+            if a == v:
+                pass
+            else:
+                self.F[a][3] -= num_children
+
+        # Update parents adjacency list to remove v
+        if len(seq) > 1:
+            self.Adj[seq[-2]].remove(v)
+
+        # Remove node from Adjacency list and feature list
+        self.Adj.pop(v)
+        self.F.pop(v)
 
     # Perform a simulation step; Make decisions and perform actions for this time step.
     def step(self):
@@ -284,24 +323,24 @@ class Tree:
 
 
 """ Test """
-# tree1 = Tree(None, 0, 0)
-# print(tree1.Adj)
-#
-# tree1.add_vertex((1, 1))
-# tree1.add_vertex((2, 3))
-# tree1.add_vertex((4, 1))
-# tree1.add_vertex((4, 3))
-# tree1.add_vertex((2, 5))
-#
-# tree1.add_edge(0, 1)
-# tree1.add_edge(0, 3)
-# tree1.add_edge(1, 2)
-# tree1.add_edge(2, 4)
-# tree1.add_edge(3, 5)
-#
-# print(tree1.Adj)
+tree1 = Tree(None, 0, 0)
+print(tree1.Adj)
+
+tree1.add_vertex((1, 1))
+tree1.add_vertex((2, 3))
+tree1.add_vertex((4, 1))
+tree1.add_vertex((4, 3))
+tree1.add_vertex((2, 5))
+
+tree1.add_edge(0, 1)
+tree1.add_edge(0, 3)
+tree1.add_edge(1, 2)
+tree1.add_edge(2, 4)
+tree1.add_edge(3, 5)
+
+print(tree1.Adj)
 # print(convert_adj(tree1.Adj))
-#
+
 # seq = []
 # dfs(tree1.Adj, seq, 0, 3)
 # print(seq)
@@ -309,11 +348,16 @@ class Tree:
 # dfs(tree1.Adj, seq, 0, 2)
 # print(seq)
 
-tree2 = Tree(None, 0, 0)
+print(tree1.F)
+tree1.delete_vertex(3)
+print(tree1.Adj)
+print(tree1.F)
 
-print(tree2.F)
-print(tree2.Adj)
-for i in range(20):
-    tree2.step()
-print(tree2.F)
-print(tree2.Adj)
+# tree2 = Tree(None, 0, 0)
+#
+# print(tree2.F)
+# print(tree2.Adj)
+# for i in range(20):
+#     tree2.step()
+# print(tree2.F)
+# print(tree2.Adj)
