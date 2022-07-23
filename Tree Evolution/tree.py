@@ -52,7 +52,8 @@ def convert_adj(adj):
     return matrix
 
 
-def dfs(tree, seq, node, target):
+# Find the path from node to target in tree
+def dfs(tree: dict, seq: list, node: int, target: int):
     """
     tree: a Tree object
     seq: current path taken
@@ -67,7 +68,7 @@ def dfs(tree, seq, node, target):
     if node == target:
         return
     else:
-        for n in tree.Adj[node]:
+        for n in tree[node]:
             # Skip parent nodes
             if n in seq:
                 continue
@@ -98,11 +99,11 @@ class Tree:
         self.Adj = dict()
         self.A = list()
 
-        # Features: [x, y, strength, sunlight, stored energy]
-        self.F = list()
+        # Features: [x, y, strength, #children, sunlight, stored energy]
+        self.F = dict()
 
         # Genetics
-        self.d = 5  # number of features
+        self.d = 6  # number of features
         self.e = 5  # number of possible decisions
         self.W1 = np.random.randn(self.d, self.e)
         self.W2 = np.random.randn(self.d, self.e)
@@ -137,17 +138,17 @@ class Tree:
         # Add a new empty list to the adjacency list
         self.Adj[self.last_id] = list()
 
-        # Create default feature list, [x,y,strength,sunlight,stored energy]
-        features = [pos[0], pos[1], 1, 0, 0]
-        self.F.append(features)
+        # Create default feature list, [x,y,strength,#children,sunlight,stored energy]
+        features = [pos[0], pos[1], 1, 0, 0, 0]
+        self.F[self.last_id] = features
 
     # Add an edge between vertex v1 and v2
     def add_edge(self, v1, v2):
         """
         Adds an edge between vertex v1 and v2.
         Params
-            v1: vertex index 1
-            v2: vertex index 2
+            v1: vertex index 1 (parent)
+            v2: vertex index 2 (child)
         """
 
         # Assert that both indices provided are in range
@@ -157,27 +158,13 @@ class Tree:
         self.Adj[v1].append(v2)
         self.Adj[v2].append(v1)
 
-    # Add a leaf node directly above parent v
-    def add_leaf(self, v):
-        """
-        Adds a new node, and connects it to node v.
-        Params
-            v: the parent node to add a leaf to
-        """
+        # Need to update number of children feature for parent and all ancestors
+        # Number of children is feature at index 3
+        ancestors = []
+        dfs(self.Adj, ancestors, self.root, v2)
 
-        # Assert its a valid index
-        assert v < len(self.F)
-
-        n = len(self.F)
-
-        # The leafs position will be same as v_pos, but with y+1
-        l_pos = [self.F[v][0], self.F[v][1]+1]
-        if not self._pos_available(l_pos):
-            return
-
-        # Now add a new vertex, then a leaf
-        self.add_vertex(l_pos)
-        self.add_edge(v, n)
+        for a in ancestors:
+            self.F[a][3] += 1
 
     # Perform a simulation step; Make decisions and perform actions for this time step.
     def step(self):
@@ -198,7 +185,7 @@ class Tree:
         A = A + np.identity(A.shape[0])
 
         # Convert the feature matrix into a numpy array
-        F = np.asarray(self.F)
+        F = np.asarray(list(self.F.values()))
         F = (F - F.min()) / (F.max() - F.min())
 
         # Pass through the MLPs. Matrix multiplication is associative.
@@ -233,37 +220,63 @@ class Tree:
             a: action id.
             f: Some actions require a factor. f is 'quantity' of change.
         """
-        # Features: [x, y, strength, sunlight, stored energy]
+        # Features: [x, y, strength, num children, sunlight, stored energy]
         if 3 > a >= 0:
             # Change feature x,y,or strength by factor f
             self.F[v][a] += round(f)
         elif a == 3:
+            print("Trying to add child")
             # Add a child to the node
             self.add_leaf(v)
         else:
             # Invalid
             pass
 
-    # Create an offspring from tree
-    def reproduce(self):
+    # Add a leaf node directly above parent v
+    def add_leaf(self, v):
         """
-        Create a copy of this tree, and modify its structure slightly (mutation)
+        Adds a new node, and connects it to node v.
+        Params
+            v: the parent node to add a leaf to
         """
-        child = copy.deepcopy(self)
 
-        # Add vertex
-        if flip(0.2):
-            pass
+        # Assert its a valid index
+        assert v < len(self.Adj)
 
-        # Add edge
-        if flip(0.1):
-            pass
+        # Perform strength check, to determine if new leaf can be added
+        if not self.strength_check(v):
+            return
 
-        # Modify vertex positions
-        if flip(0.1):
-            pass
+        # The leafs position will be same as v_pos, but with y+1
+        l_pos = [self.F[v][0], self.F[v][1] + 1]
+        # if not self._pos_available(l_pos):
+        #     return
 
-        return child
+        # Now add a new vertex, then a leaf
+        self.add_vertex(l_pos)
+        self.add_edge(v, self.last_id)
+
+    # Check if v and all its ancestors can support an additional child
+    def strength_check(self, v):
+        """
+        v: node to find in tree
+        """
+
+        # Use DFS to find all ancestors of node v. Result is stored in seq
+        seq = []
+        dfs(self.Adj, seq, self.root, v)
+
+        # Perform a strength check, to determine if tree can add a new leaf
+        meets_strength = True
+        for a in seq:
+            # strength is index 2
+            # number of children is index 3
+            # if strength is less than or equal to number children, fail
+            if self.F[a][2] <= self.F[a][3]:
+                meets_strength = False
+                break
+
+        return meets_strength
 
     # Return true if environment cell at 'pos' is empty, false otherwise
     def _pos_available(self, pos):
@@ -271,24 +284,36 @@ class Tree:
 
 
 """ Test """
+# tree1 = Tree(None, 0, 0)
+# print(tree1.Adj)
+#
+# tree1.add_vertex((1, 1))
+# tree1.add_vertex((2, 3))
+# tree1.add_vertex((4, 1))
+# tree1.add_vertex((4, 3))
+# tree1.add_vertex((2, 5))
+#
+# tree1.add_edge(0, 1)
+# tree1.add_edge(0, 3)
+# tree1.add_edge(1, 2)
+# tree1.add_edge(2, 4)
+# tree1.add_edge(3, 5)
+#
+# print(tree1.Adj)
+# print(convert_adj(tree1.Adj))
+#
+# seq = []
+# dfs(tree1.Adj, seq, 0, 3)
+# print(seq)
+# seq = []
+# dfs(tree1.Adj, seq, 0, 2)
+# print(seq)
 
-tree1 = Tree(None, 0, 0)
-print(tree1.Adj)
+tree2 = Tree(None, 0, 0)
 
-tree1.add_vertex((1, 1))
-tree1.add_vertex((2, 3))
-tree1.add_vertex((4, 1))
-
-tree1.add_edge(0, 1)
-tree1.add_edge(0, 3)
-tree1.add_edge(1, 2)
-
-print(tree1.Adj)
-print(convert_adj(tree1.Adj))
-
-seq = []
-dfs(tree1, seq, tree1.root, 3)
-print(seq)
-seq = []
-dfs(tree1, seq, tree1.root, 2)
-print(seq)
+print(tree2.F)
+print(tree2.Adj)
+for i in range(20):
+    tree2.step()
+print(tree2.F)
+print(tree2.Adj)
