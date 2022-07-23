@@ -28,6 +28,59 @@ def softmax(x):
     return f / f.sum(axis=0)
 
 
+# Convert adjacency list to adjacency matrix
+def convert_adj(adj):
+    """
+    Converts adjacency list into adjacency matrix
+    Params:
+        Adj: The adjacency list. A python list of lists
+    """
+
+    # The number of vertices V, will always be length of Adj
+    # Enforced because we have no 'floating' leaves
+    V = len(adj)
+
+    # Initialize a matrix of zeros, shape (V,V)
+    matrix = [[0 for j in range(V)]
+              for i in range(V)]
+
+    # Add a 1 to every entry where an edge exists
+    for i in range(V):
+        for j in adj[i]:
+            matrix[i][j] = 1
+
+    return matrix
+
+
+def dfs(tree, seq, node, target):
+    """
+    tree: a Tree object
+    seq: current path taken
+    node: current node visiting
+    target: target node to find
+    """
+
+    # Add current node to sequence
+    seq.append(node)
+
+    # Found target, break
+    if node == target:
+        return
+    else:
+        for n in tree.Adj[node]:
+            # Skip parent nodes
+            if n in seq:
+                continue
+            # Recurse into child node
+            dfs(tree, seq, n, target)
+            # Found target, break
+            if seq[-1] == target:
+                return
+
+    # Dead end, remove from sequence
+    seq.pop()
+
+
 class Tree:
 
     def __init__(self, environment, x, y):
@@ -42,7 +95,7 @@ class Tree:
         self.env = environment
 
         # Adjacency List (Adj), Adjacency Matrix (A), Features (F)
-        self.Adj = list()
+        self.Adj = dict()
         self.A = list()
 
         # Features: [x, y, strength, sunlight, stored energy]
@@ -56,6 +109,8 @@ class Tree:
 
         # Initialize a basic tree, single vertex.
         # original vertex has id = 0, and position of origin
+        self.root = 0
+        self.last_id = -1
         self.add_vertex((x, y))
 
     # Equality operator to compare two trees in the environment
@@ -76,8 +131,11 @@ class Tree:
 
         assert len(pos) == 2
 
+        # Create a new id for this vertex
+        self.last_id = self.last_id + 1
+
         # Add a new empty list to the adjacency list
-        self.Adj.append(list())
+        self.Adj[self.last_id] = list()
 
         # Create default feature list, [x,y,strength,sunlight,stored energy]
         features = [pos[0], pos[1], 1, 0, 0]
@@ -86,7 +144,7 @@ class Tree:
     # Add an edge between vertex v1 and v2
     def add_edge(self, v1, v2):
         """
-        Adds an edge between vertex v1 and v2
+        Adds an edge between vertex v1 and v2.
         Params
             v1: vertex index 1
             v2: vertex index 2
@@ -133,7 +191,7 @@ class Tree:
 
         # Convert the adjacency list into a numpy adjacency matrix
         V = len(self.Adj)
-        self.A = self._convert_adj(self.Adj)
+        self.A = convert_adj(self.Adj)
 
         # Add the identity to add self connections
         A = np.asarray(self.A)
@@ -207,29 +265,30 @@ class Tree:
 
         return child
 
-    # Convert adjacency list to adjacency matrix
-    def _convert_adj(self, Adj):
-        """
-        Converts adjacency list into adjacency matrix
-        Params:
-            Adj: The adjacency list. A python list of lists
-        """
-
-        # The number of vertices V, will always be length of Adj
-        # Enforced because we have no 'floating' leaves
-        V = len(Adj)
-
-        # Initialize a matrix of zeros, shape (V,V)
-        matrix = [[0 for j in range(V)]
-                  for i in range(V)]
-
-        # Add a 1 to every entry where an edge exists
-        for i in range(V):
-            for j in Adj[i]:
-                matrix[i][j] = 1
-
-        return matrix
-
     # Return true if environment cell at 'pos' is empty, false otherwise
     def _pos_available(self, pos):
         return self.env.get_cell(pos[0], pos[1]) is None
+
+
+""" Test """
+
+tree1 = Tree(None, 0, 0)
+print(tree1.Adj)
+
+tree1.add_vertex((1, 1))
+tree1.add_vertex((2, 3))
+tree1.add_vertex((4, 1))
+
+tree1.add_edge(0, 1)
+tree1.add_edge(0, 3)
+tree1.add_edge(1, 2)
+
+print(tree1.Adj)
+print(convert_adj(tree1.Adj))
+
+seq = []
+dfs(tree1, seq, tree1.root, 3)
+print(seq)
+seq = []
+dfs(tree1, seq, tree1.root, 2)
+print(seq)
