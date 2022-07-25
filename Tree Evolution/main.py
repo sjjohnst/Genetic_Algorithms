@@ -13,10 +13,10 @@ FPS = 60
 pygame.display.set_caption("Tree Evolution")
 
 # Instantiate Environment
-env = Environment(200, 60)
+env = Environment(30, 50)
 
 # Initialize population
-env.init_population(20)
+env.init_population(5)
 
 # Test environment
 # print("Pop size:", env.get_population())
@@ -28,7 +28,7 @@ env.init_population(20)
 # Params: env, surface
 env_surface = pygame.Surface(env_size)
 view = EnvView(env, env_surface)
-view.update()
+view.draw()
 
 # Pygame code
 running = True
@@ -39,14 +39,18 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                pause = not pause
 
     clock.tick(60)
     # print(clock.get_fps())
 
-    view.draw()
+    view.update()
     screen.blit(env_surface, env_pos)
 
-    # print(view.offset)
+    if not pause:
+        env.step()
 
     pygame.display.update()
 

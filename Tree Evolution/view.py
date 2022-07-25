@@ -7,6 +7,7 @@ The viewport maps the data of the model (environment) onto the screen.
 """
 import pygame
 from parameters import *
+import event
 
 
 class CntrView:
@@ -37,9 +38,11 @@ class EnvView:
         self.cell_size = 20
         self.keyboard_speed = 5
 
+        # Subscribe to events
+        event.subscribe("CellUpdates", self.update_cells)
+
         # Attach the model object, and then have the model attach a reference to this view
         self.env = env
-        self.env.attach(self)
 
         # Surfaces
         self.display_surface = display_surface
@@ -65,11 +68,6 @@ class EnvView:
         self.internal_offset.y = self.internal_surf_size[1] // 2 - self.half_h
 
         self.min_zoom = max(2*self.half_w/self.env_rect.width, 2*self.half_h/self.env_rect.height)
-
-    # Receive notification of event from observed
-    def notify(self, event):
-        # Handle event(s)
-        pass
 
     # Updates offset using keyboard input
     def keyboard_control(self):
@@ -114,7 +112,7 @@ class EnvView:
         # self.zoom_scale = min(1.25, self.zoom_scale)
 
     # Blit surface to display
-    def draw(self):
+    def update(self):
         self.keyboard_control()
         self.zoom_keyboard_control()
 
@@ -132,7 +130,7 @@ class EnvView:
         self.display_surface.blit(scaled_surf, scaled_rect)
 
     # Blit everything to the surface
-    def update(self):
+    def draw(self):
         # For each cell of the environment, blit a rectangle representing its value(s)
         for y in range(self.env.height):
             for x in range(self.env.width):
@@ -140,7 +138,7 @@ class EnvView:
                 # No leaf at (x,y)
                 if self.env.get_cell(x, y) is None:
                     # Plot sunlight
-                    value = self.env.sun[y, x]
+                    value = self.env.get_sun(x, y)
                     rgb = (value * 255, value*255, value*255)
 
                 # There is a leaf at (x,y)
@@ -148,6 +146,35 @@ class EnvView:
                     rgb = GREEN
 
                 self.blit_cell([x, y], rgb)
+
+    # Handle single cell updates. Called when 'CellUpdates' event is pushed
+    def update_cells(self, data: dict):
+        """
+        data: dictionary of mappings from old_cell -> new_cell to look at and update on display
+        """
+        for old_pos, new_pos in data.items():
+            # Extract information
+            old_x, old_y = old_pos
+            new_x, new_y = new_pos
+
+            # Get the value of the cell in previous and new state
+            old_cell = self.env.get_cell(old_x, old_y)
+            new_cell = self.env.get_cell(new_x, new_y)
+
+            # Only cover the old cell with sunlight if no leaf is here
+            if old_cell is None:
+                # Get sunlight value at old cell
+                value = self.env.get_sun(old_x, old_y)
+                sun_rgb = (value * 255, value * 255, value * 255)
+
+                # Now blit sun onto old cell, and leaf (GREEN) onto new cell
+                print("Blit sun: ", old_pos)
+                self.blit_cell(old_pos, sun_rgb)
+
+            # Fill the new cell with node, if node there
+            if new_cell is not None:
+                print("Blit leaf: ", new_pos)
+                self.blit_cell(new_pos, GREEN)
 
     # Base function to blit a cell at pos, with rbg value provided
     def blit_cell(self, pos, rbg):

@@ -61,7 +61,7 @@ class Environment:
             tree.step()
 
         # If there were cell updates, post event
-        if not self.cell_updates:
+        if self.cell_updates:
             event.post_event("CellUpdates", self.cell_updates)
 
         self.time += 1
