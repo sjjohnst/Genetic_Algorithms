@@ -14,7 +14,7 @@ Trees also have a set of general traits, which are not associated with any speci
 """
 
 import numpy as np
-import copy
+import event
 
 
 def flip(p):
@@ -99,20 +99,24 @@ class Tree:
         self.Adj = dict()
         self.A = list()
 
-        # Features: [x, y, strength, #children, sunlight, stored energy]
+        # Features: [x, y, strength, #children, energy]
         self.F = dict()
 
+        # Initialize a basic tree, single vertex.
+        # original vertex has id = 0, and position of origin (0,0)
+        self.root = 0
+        self.last_id = -1
+        self.add_vertex((0, 0))
+
+        # We store the provided position, which is the 'true' position of the root in the environment
+        # All node positions are therefore relative to (0,0).
+        self.origin = (x, y)
+
         # Genetics
-        self.d = 6  # number of features
+        self.d = 5  # number of features
         self.e = 5  # number of possible decisions
         self.W1 = np.random.randn(self.d, self.e)
         self.W2 = np.random.randn(self.d, self.e)
-
-        # Initialize a basic tree, single vertex.
-        # original vertex has id = 0, and position of origin
-        self.root = 0
-        self.last_id = -1
-        self.add_vertex((x, y))
 
     # Equality operator to compare two trees in the environment
     def __eq__(self, other):
@@ -120,12 +124,12 @@ class Tree:
 
     # Hash function so that environment can map leaves to tree instances
     def __hash__(self):
-        return hash(self.W1.sum() + self.W2.sum())
+        return hash(self.origin)
 
     # Add a new vertex at position (pos)
     def add_vertex(self, pos):
         """
-        Adds a new vertex, with default features f: [x,y,strength,sunlight,stored energy]
+        Adds a new vertex, with default features f: [x,y,strength,energy]
         Params
             pos: vertex position (x,y)
         """
@@ -138,8 +142,8 @@ class Tree:
         # Add a new empty list to the adjacency list
         self.Adj[self.last_id] = list()
 
-        # Create default feature list, [x,y,strength,#children,sunlight,stored energy]
-        features = [pos[0], pos[1], 1, 0, 0, 0]
+        # Create default feature list, [x, y, strength, #children, energy]
+        features = [pos[0], pos[1], 1, 0, 0]
         self.F[self.last_id] = features
 
     # Add an edge between vertex v1 and v2
@@ -205,18 +209,32 @@ class Tree:
         self.Adj.pop(v)
         self.F.pop(v)
 
-    # Perform a simulation step; Make decisions and perform actions for this time step.
-    def step(self):
+    # Gather resources from the environment
+    def gather(self):
         """
-        The tree can do a number of actions:
-            - Grow a new leaf
-            - Extend a branch
-            - Strengthen a leaf
-            - ETC
+        For every node position, query the environment and collect the associated sunlight
         """
+        for n, f in self.F.items():
+            # n is node name
+            # f is : [x, y, strength, num children, energy]
+            x, y, strength = tuple(f[:3])
+            sun = self.env.get_sun(x+self.origin[0], y+self.origin[1])
+            if sun is None:
+                print(self.origin)
+                print(x, y)
 
+            # Update feature list
+            strength = max(1, strength) # avoid zero division
+            self.F[n][4] += sun / strength
+
+    # Do the forward pass of the GNN
+    def forward(self):
+        """
+        The tree is a graph, and its genetics are weight matrices.
+        This effectively makes the Tree a GNN.
+        This function applies a forward pass of this GNN over the tree.
+        """
         # Convert the adjacency list into a numpy adjacency matrix
-        V = len(self.Adj)
         self.A = convert_adj(self.Adj)
 
         # Add the identity to add self connections
@@ -225,7 +243,6 @@ class Tree:
 
         # Convert the feature matrix into a numpy array
         F = np.asarray(list(self.F.values()))
-        F = (F - F.min()) / (F.max() - F.min())
 
         # Pass through the MLPs. Matrix multiplication is associative.
         Y = np.matmul(A, np.matmul(F, self.W1))
@@ -234,10 +251,101 @@ class Tree:
         # Apply activation function
         Z = np.tanh(Z)
 
-        # Use Y for decision
+        # Return Z and Y
+        return [Z, Y]
+
+    # Perform action 'a' on vertex 'v', by factor of 'f'
+    def execute(self, v, a, f):
+        """
+        Params:
+            v: index of vertex.
+            a: action id.
+            f: Some actions require a factor. f is 'quantity' of change.
+        """
+        # Features: [x, y, strength, num children, energy]
+        if 2 > a >= 0:
+            # Change feature x,y by factor of f
+            # Check energy requirement: log of distance from root
+            r = self.F[v][0] ** 2 + self.F[v][1] ** 2 + 1
+            if np.log(r) <= self.F[v][4]:
+
+                # Grab old node position (shifted by origin), then update it, and spend energy
+                x_old, y_old = self.F[v][:2]
+
+                # Update position
+                if a == 0:
+                    x_old += round(f)
+                else:
+                    y_old += round(f)
+
+                # Grab new position, shifted by origin
+                new_pos = [x_old + self.origin[0], y_old + self.origin[1]]
+
+                # Check if new position is available and in bounds
+                if self._pos_available(new_pos):
+                    print("Shifting node of", hash(self))
+
+                    old_pos = [self.F[v][0] + self.origin[0], self.F[v][1] + self.origin[1]]
+
+                    self.F[v][a] += round(f)
+                    self.F[v][4] -= np.log(r)  # Spend energy
+
+                    event.post_event("MoveNode", [old_pos, new_pos])
+
+        elif a == 2:
+            # Increase strength by 1
+            # Check energy requirement: Log of number of children
+            if np.log(self.F[v][3] + 1) <= self.F[v][4]:
+                print("Increasing strength of", hash(self))
+                self.F[v][2] += 1
+                self.F[v][4] -= np.log(self.F[v][3] + 1)  # Spend energy
+
+        elif a == 3:
+            # Add a child to the node
+            # Check energy requirement: Log of number of children
+            energy_req = np.log(self.F[v][3] + 1)
+
+            if energy_req <= self.F[v][4] and self.strength_check(v):
+                # The leafs position will be same as v_pos, but with y+1
+                leaf_pos = [self.F[v][0], self.F[v][1] + 1]
+
+                if self._pos_available(leaf_pos):
+                    print("Adding leaf for", hash(self))
+
+                    # Add new node, add edge to parent, and finally update energy
+                    self.add_vertex(leaf_pos)
+                    self.add_edge(v, self.last_id)
+                    self.F[v][4] -= energy_req
+
+                    # Shift l_pos to be in environment grid space
+                    leaf_env_pos = [leaf_pos[0]+self.origin[0], leaf_pos[1]+self.origin[1]]
+                    event.post_event("NewNode", [hash(self), leaf_env_pos])
+
+        else:
+            # Do nothing / Invalid
+            pass
+
+    # Perform a simulation step; Gather resources, Forward pass GNN, Execute actions
+    def step(self):
+        """
+        The tree can do a number of actions:
+            - Grow a new leaf
+            - Shift a node
+            - Strengthen a leaf
+            - ETC
+        """
+        # Gather resources from environment
+        self.gather()
+
+        # Do a forward pass of the GNN
+        Z, Y = self.forward()
+        V = len(self.Adj)
+
+        # Every node makes a choice
         for v in range(V):
             # For the first vertex (the root), cannot shift x or y
             if v == 0:
+                # Use the probabilistic distribution of this row to select an action (a)
                 a = np.random.choice(self.e-2, p=softmax(Y[v, 2:]))
                 a += 2
 
@@ -250,50 +358,6 @@ class Tree:
 
             # Perform action (a) on vertex (v) in helper function, by factor f
             self.execute(v, a, f)
-
-    # Perform action a on vertex v, by factor f
-    def execute(self, v, a, f):
-        """
-        Params:
-            v: index of vertex.
-            a: action id.
-            f: Some actions require a factor. f is 'quantity' of change.
-        """
-        # Features: [x, y, strength, num children, sunlight, stored energy]
-        if 3 > a >= 0:
-            # Change feature x,y,or strength by factor f
-            self.F[v][a] += round(f)
-        elif a == 3:
-            print("Trying to add child")
-            # Add a child to the node
-            self.add_leaf(v)
-        else:
-            # Invalid
-            pass
-
-    # Add a leaf node directly above parent v
-    def add_leaf(self, v):
-        """
-        Adds a new node, and connects it to node v.
-        Params
-            v: the parent node to add a leaf to
-        """
-
-        # Assert its a valid index
-        assert v < len(self.Adj)
-
-        # Perform strength check, to determine if new leaf can be added
-        if not self.strength_check(v):
-            return
-
-        # The leafs position will be same as v_pos, but with y+1
-        l_pos = [self.F[v][0], self.F[v][1] + 1]
-        # if not self._pos_available(l_pos):
-        #     return
-
-        # Now add a new vertex, then a leaf
-        self.add_vertex(l_pos)
-        self.add_edge(v, self.last_id)
 
     # Check if v and all its ancestors can support an additional child
     def strength_check(self, v):
@@ -319,26 +383,26 @@ class Tree:
 
     # Return true if environment cell at 'pos' is empty, false otherwise
     def _pos_available(self, pos):
-        return self.env.get_cell(pos[0], pos[1]) is None
+        return self.env.get_cell(pos[0]+self.origin[0], pos[1]+self.origin[1]) is None
 
 
 """ Test """
-tree1 = Tree(None, 0, 0)
-print(tree1.Adj)
-
-tree1.add_vertex((1, 1))
-tree1.add_vertex((2, 3))
-tree1.add_vertex((4, 1))
-tree1.add_vertex((4, 3))
-tree1.add_vertex((2, 5))
-
-tree1.add_edge(0, 1)
-tree1.add_edge(0, 3)
-tree1.add_edge(1, 2)
-tree1.add_edge(2, 4)
-tree1.add_edge(3, 5)
-
-print(tree1.Adj)
+# tree1 = Tree(None, 0, 0)
+# print(tree1.Adj)
+#
+# tree1.add_vertex((1, 1))
+# tree1.add_vertex((2, 3))
+# tree1.add_vertex((4, 1))
+# tree1.add_vertex((4, 3))
+# tree1.add_vertex((2, 5))
+#
+# tree1.add_edge(0, 1)
+# tree1.add_edge(0, 3)
+# tree1.add_edge(1, 2)
+# tree1.add_edge(2, 4)
+# tree1.add_edge(3, 5)
+#
+# print(tree1.Adj)
 # print(convert_adj(tree1.Adj))
 
 # seq = []
@@ -348,10 +412,10 @@ print(tree1.Adj)
 # dfs(tree1.Adj, seq, 0, 2)
 # print(seq)
 
-print(tree1.F)
-tree1.delete_vertex(3)
-print(tree1.Adj)
-print(tree1.F)
+# print(tree1.F)
+# tree1.delete_vertex(3)
+# print(tree1.Adj)
+# print(tree1.F)
 
 # tree2 = Tree(None, 0, 0)
 #
