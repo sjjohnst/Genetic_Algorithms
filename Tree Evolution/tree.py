@@ -126,6 +126,20 @@ class Tree:
     def __hash__(self):
         return hash(self.origin)
 
+    # Return all edges in this tree
+    def get_edges(self):
+        edges = set()
+        for v1, adj in self.Adj.items():
+            for v2 in adj:
+                edge = (v1, v2)
+                edges.add(edge)
+        return edges
+
+    # Return the position of vertex v
+    def get_vertex_pos(self, v):
+        if v in self.F.keys():
+            return self.F[v][0] + self.origin[0], self.F[v][1] + self.origin[1]
+
     # Add a new vertex at position (pos)
     def add_vertex(self, pos):
         """
@@ -219,9 +233,6 @@ class Tree:
             # f is : [x, y, strength, num children, energy]
             x, y, strength = tuple(f[:3])
             sun = self.env.get_sun(x+self.origin[0], y+self.origin[1])
-            if sun is None:
-                print(self.origin)
-                print(x, y)
 
             # Update feature list
             strength = max(1, strength) # avoid zero division
@@ -279,13 +290,12 @@ class Tree:
                     y_old += round(f)
 
                 # Grab new position, shifted by origin
-                new_pos = [x_old + self.origin[0], y_old + self.origin[1]]
+                new_pos = [x_old, y_old]
 
                 # Check if new position is available and in bounds
                 if self._pos_available(new_pos):
-                    print("Shifting node of", hash(self))
-
                     old_pos = [self.F[v][0] + self.origin[0], self.F[v][1] + self.origin[1]]
+                    new_pos = [x_old + self.origin[0], y_old + self.origin[1]]
 
                     self.F[v][a] += round(f)
                     self.F[v][4] -= np.log(r)  # Spend energy
@@ -296,7 +306,6 @@ class Tree:
             # Increase strength by 1
             # Check energy requirement: Log of number of children
             if np.log(self.F[v][3] + 1) <= self.F[v][4]:
-                print("Increasing strength of", hash(self))
                 self.F[v][2] += 1
                 self.F[v][4] -= np.log(self.F[v][3] + 1)  # Spend energy
 
@@ -310,8 +319,6 @@ class Tree:
                 leaf_pos = [self.F[v][0], self.F[v][1] + 1]
 
                 if self._pos_available(leaf_pos):
-                    print("Adding leaf for", hash(self))
-
                     # Add new node, add edge to parent, and finally update energy
                     self.add_vertex(leaf_pos)
                     self.add_edge(v, self.last_id)

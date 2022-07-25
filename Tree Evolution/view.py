@@ -124,10 +124,31 @@ class EnvView:
         env_offset = self.internal_offset + self.offset
         self.internal_surf.blit(self.env_surface, env_offset)
 
+        self.draw_branches(env_offset)
+
         scaled_surf = pygame.transform.scale(self.internal_surf, self.internal_surf_size_vector*self.zoom_scale)
         scaled_rect = scaled_surf.get_rect(center=(self.half_w, self.half_h))
 
         self.display_surface.blit(scaled_surf, scaled_rect)
+
+    # Blit all branches (graph edges) to env_surface
+    def draw_branches(self, offset):
+        # First, retrieve all edges from the environment
+        # Edges is a dictionary, mapping tree key to set of edges
+        edges = self.env.get_edges()
+
+        # Iterate over all edges
+        for pos1, pos2 in edges.items():
+            x1, y1 = pos1
+            x2, y2 = pos2
+
+            x1 = self.cell_size * (x1 + 0.5) + offset.x
+            y1 = (self.env.height - 0.5 - y1) * self.cell_size + offset.y
+
+            x2 = self.cell_size * (x2 + 0.5) + offset.x
+            y2 = (self.env.height - 0.5 - y2) * self.cell_size + offset.y
+
+            pygame.draw.line(self.internal_surf, BROWN, (x1, y1), (x2, y2), width=2)
 
     # Blit everything to the surface
     def draw(self):
@@ -147,6 +168,9 @@ class EnvView:
 
                 self.blit_cell([x, y], rgb)
 
+        # Draw all branches (edges of the trees)
+        # self.draw_branches()
+
     # Handle single cell updates. Called when 'CellUpdates' event is pushed
     def update_cells(self, data: dict):
         """
@@ -163,12 +187,13 @@ class EnvView:
 
             # Only cover the old cell with sunlight if no leaf is here
             if old_cell is None:
+                print("Cover old cell", old_pos)
                 # Get sunlight value at old cell
                 value = self.env.get_sun(old_x, old_y)
                 sun_rgb = (value * 255, value * 255, value * 255)
 
                 # Now blit sun onto old cell, and leaf (GREEN) onto new cell
-                print("Blit sun: ", old_pos)
+                # print("Blit sun: ", old_pos)
                 self.blit_cell(old_pos, sun_rgb)
 
             # Fill the new cell with node, if node there

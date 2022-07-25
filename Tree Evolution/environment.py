@@ -109,6 +109,17 @@ class Environment:
 
         return self.env[y][x]
 
+    # Return a mapping of pos:pos representing all edges in the environment
+    def get_edges(self):
+        edges = dict()
+        for key, tree in self.trees.items():
+            tree_edges = tree.get_edges()
+            for edge in tree_edges:
+                pos1 = tree.get_vertex_pos(edge[0])
+                pos2 = tree.get_vertex_pos(edge[1])
+                edges[pos1] = pos2
+        return edges
+
     # Instantiate a new tree, positioned at argument 'pos', and finally add to organism list
     def add_tree(self, x, y):
         # Check position is available
