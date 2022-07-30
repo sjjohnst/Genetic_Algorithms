@@ -11,7 +11,7 @@ def subscribe(event, func):
 
 def post_event(event, data):
     if event in subscribers.keys():
-        print(event+" Event")
+        # print(event+" Event")
         # Notify all subscribers of 'event', pass data.
         for f in subscribers[event]:
             f(data)

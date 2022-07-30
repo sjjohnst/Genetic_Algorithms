@@ -12,10 +12,25 @@ Each tree is associated with exactly one environment.
 Each environment can contain any number of organisms.
 """
 
+import math
 import numpy as np
 from tree import Tree
 import event
 import random
+
+
+def tree_dead(tree: Tree):
+    # Extract data from tree instance
+    a = float(tree.age)
+    c = float(tree.get_number_vertices())
+
+    # R is the exponential base
+    r = 1.0
+
+    required_energy = math.pow(r, a) * math.log(c+1, 50)
+    tree_energy = tree.get_total_energy()
+
+    return tree_energy < required_energy
 
 
 class Environment:
@@ -41,6 +56,7 @@ class Environment:
         # Subscribe to events
         event.subscribe("NewNode", self.new_node)
         event.subscribe("MoveNode", self.move_node)
+        event.subscribe("DeleteNode", self.delete_node)
 
     # Run a simulation step
     def step(self):
@@ -59,12 +75,25 @@ class Environment:
         random.shuffle(tree_list)
         for tree in tree_list:
             tree.step()
+            self.constrain(tree)
 
         # If there were cell updates, post event
         if self.cell_updates:
             event.post_event("CellUpdates", self.cell_updates)
 
         self.time += 1
+        # print(self.time)
+
+    # Apply growth constraints to a tree in the environment. Check for death/failure(s).
+    def constrain(self, tree: Tree):
+
+        # First, check if tree dies this step
+        if tree_dead(tree):
+            # Delete the tree from the environment
+            key = hash(tree)
+            tree.delete_vertex(tree.root)
+            self.trees.pop(key)
+            del tree
 
     # Initialize environment base
     def initialize(self):
@@ -164,7 +193,7 @@ class Environment:
         """
         Creates a numpy matrix representing the sunlight value at each cell in the environment.
         """
-        base_sun = np.ones((self.height, self.width))
+        base_sun = np.ones((self.height, self.width)) * 2.0
         grad_sun = np.ones_like(base_sun)
 
         # Modify the sunlight of each row according to height
@@ -175,6 +204,23 @@ class Environment:
         # Create a base sunlight level for all heights below a threshold of 'f' percent
         grad_sun[:int(f*self.height), :] = grad_sun[int(f*self.height):int(f*self.height) + 1, :]
         return grad_sun
+
+    # Called when a node is deleted from the environment.
+    def delete_node(self, data):
+        """
+        data: [key, pos]
+            - key: The unique tree hash key, for the tree adding said node.
+            - pos: (x,y) position of the node being deleted.
+        """
+        # Extract data
+        key, pos = data
+        x, y = pos
+
+        # Check that the position corresponds to the correct tree
+        if self.env[y][x] == key:
+            # Delete the node here, add to cell_update list.
+            self.env[y][x] = None
+            self.cell_updates[tuple(pos)] = None
 
     # Called when a new node is added to the environment space
     def new_node(self, data):

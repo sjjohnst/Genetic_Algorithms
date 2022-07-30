@@ -16,7 +16,7 @@ pygame.display.set_caption("Tree Evolution")
 env = Environment(75, 30)
 
 # Initialize population
-env.init_population(2)
+env.init_population(20)
 
 # Test environment
 # print("Pop size:", env.get_population())
@@ -42,6 +42,8 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 pause = not pause
+            if event.key == pygame.K_RETURN:
+                env.step()
 
     clock.tick(60)
     # print(clock.get_fps())

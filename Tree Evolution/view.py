@@ -160,7 +160,7 @@ class EnvView:
                 if self.env.get_cell(x, y) is None:
                     # Plot sunlight
                     value = self.env.get_sun(x, y)
-                    rgb = (value * 255, value*255, value*255)
+                    rgb = (value * 255 / 2, value*255 / 2, value*255 / 2)
 
                 # There is a leaf at (x,y)
                 else:
@@ -177,28 +177,25 @@ class EnvView:
         data: dictionary of mappings from old_cell -> new_cell to look at and update on display
         """
         for old_pos, new_pos in data.items():
+
             # Extract information
             old_x, old_y = old_pos
-            new_x, new_y = new_pos
-
-            # Get the value of the cell in previous and new state
             old_cell = self.env.get_cell(old_x, old_y)
-            new_cell = self.env.get_cell(new_x, new_y)
 
-            # Only cover the old cell with sunlight if no leaf is here
+            # Only covert the old cell with sunlight if no leaf is here
             if old_cell is None:
-                print("Cover old cell", old_pos)
+                # print("Covert old cell", old_pos)
                 # Get sunlight value at old cell
                 value = self.env.get_sun(old_x, old_y)
-                sun_rgb = (value * 255, value * 255, value * 255)
+                sun_rgb = (value * 255 / 2, value * 255 / 2, value * 255 / 2)
 
                 # Now blit sun onto old cell, and leaf (GREEN) onto new cell
                 # print("Blit sun: ", old_pos)
                 self.blit_cell(old_pos, sun_rgb)
 
             # Fill the new cell with node, if node there
-            if new_cell is not None:
-                print("Blit leaf: ", new_pos)
+            if new_pos is not None:
+                # print("Blit leaf: ", new_pos)
                 self.blit_cell(new_pos, GREEN)
 
     # Base function to blit a cell at pos, with rbg value provided

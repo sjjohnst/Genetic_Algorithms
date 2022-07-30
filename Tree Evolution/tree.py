@@ -105,6 +105,7 @@ class Tree:
         # Initialize a basic tree, single vertex.
         # original vertex has id = 0, and position of origin (0,0)
         self.root = 0
+        self.age = 0
         self.last_id = -1
         self.add_vertex((0, 0))
 
@@ -139,6 +140,20 @@ class Tree:
     def get_vertex_pos(self, v):
         if v in self.F.keys():
             return self.F[v][0] + self.origin[0], self.F[v][1] + self.origin[1]
+
+    # Return total number of vertices in the Tree
+    def get_number_vertices(self):
+        return len(self.Adj.keys())
+
+    # Return the sum of all nodes stored energy
+    def get_total_energy(self):
+        # Convert F to numpy array
+        F = np.asarray(list(self.F.values()))
+
+        # Slice last column to get stored energy
+        stored_energy = np.sum(F[:,4])
+
+        return stored_energy
 
     # Add a new vertex at position (pos)
     def add_vertex(self, pos):
@@ -218,6 +233,12 @@ class Tree:
         # Update parents adjacency list to remove v
         if len(seq) > 1:
             self.Adj[seq[-2]].remove(v)
+
+        # Post the 'delete node' event
+        x_pos, y_pos = self.F[v][:2]
+        true_pos = [x_pos + self.origin[0], y_pos+self.origin[1]]
+        data = [hash(self), true_pos]
+        event.post_event("DeleteNode", data)
 
         # Remove node from Adjacency list and feature list
         self.Adj.pop(v)
@@ -304,29 +325,23 @@ class Tree:
 
         elif a == 2:
             # Increase strength by 1
-            # Check energy requirement: Log of number of children
-            if np.log(self.F[v][3] + 1) <= self.F[v][4]:
-                self.F[v][2] += 1
-                self.F[v][4] -= np.log(self.F[v][3] + 1)  # Spend energy
+            self.F[v][2] += 1
+            self.F[v][4] -= 1
 
         elif a == 3:
             # Add a child to the node
-            # Check energy requirement: Log of number of children
-            energy_req = np.log(self.F[v][3] + 1)
+            # The leafs position will be same as v_pos, but with y+1
+            leaf_pos = [self.F[v][0], self.F[v][1] + 1]
 
-            if energy_req <= self.F[v][4] and self.strength_check(v):
-                # The leafs position will be same as v_pos, but with y+1
-                leaf_pos = [self.F[v][0], self.F[v][1] + 1]
+            if self._pos_available(leaf_pos):
+                # Add new node, add edge to parent, and finally update energy
+                self.add_vertex(leaf_pos)
+                self.add_edge(v, self.last_id)
+                self.F[v][4] -= 2
 
-                if self._pos_available(leaf_pos):
-                    # Add new node, add edge to parent, and finally update energy
-                    self.add_vertex(leaf_pos)
-                    self.add_edge(v, self.last_id)
-                    self.F[v][4] -= energy_req
-
-                    # Shift l_pos to be in environment grid space
-                    leaf_env_pos = [leaf_pos[0]+self.origin[0], leaf_pos[1]+self.origin[1]]
-                    event.post_event("NewNode", [hash(self), leaf_env_pos])
+                # Shift l_pos to be in environment grid space
+                leaf_env_pos = [leaf_pos[0]+self.origin[0], leaf_pos[1]+self.origin[1]]
+                event.post_event("NewNode", [hash(self), leaf_env_pos])
 
         else:
             # Do nothing / Invalid
@@ -365,6 +380,9 @@ class Tree:
 
             # Perform action (a) on vertex (v) in helper function, by factor f
             self.execute(v, a, f)
+
+        # Increment age by 1
+        self.age += 1
 
     # Check if v and all its ancestors can support an additional child
     def strength_check(self, v):
