@@ -1,11 +1,12 @@
 from environment import Environment
-from view import EnvView
+from view import EnvView, CntrView
 import pygame
 from controller import Controller
 from parameters import *
 
 # Initialize pygame and the scree surface
 pygame.init()
+
 screen = pygame.display.set_mode(screen_size)
 clock = pygame.time.Clock()
 
@@ -30,6 +31,10 @@ env_surface = pygame.Surface(env_size)
 view = EnvView(env, env_surface)
 view.draw()
 
+controller_surface = pygame.Surface(controller_size)
+cntr_view = CntrView(controller_surface)
+cntr_view.draw()
+
 # Pygame code
 running = True
 pause = True
@@ -49,7 +54,9 @@ while running:
     # print(clock.get_fps())
 
     view.update()
+    cntr_view.update()
     screen.blit(env_surface, env_pos)
+    screen.blit(controller_surface, controller_pos)
 
     if not pause:
         env.step()

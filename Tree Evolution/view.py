@@ -12,18 +12,57 @@ import event
 
 class CntrView:
 
-    def __init__(self, height, width, controller):
+    def __init__(self, surface):
         """
         Params
-            height: The number of pixels in height
-            width: The number of pixels in width
-            controller: The controller instance to observe
+            surface: The surface to display to
         """
 
-        self.height = height
-        self.width = width
-        self.controller = controller
+        # Surfaces
+        self.display_surface = surface
+        self.width, self.height = self.display_surface.get_size()
+        self.cntr_surf = pygame.Surface((self.width, self.height))
+        self.cntr_rect = self.display_surface.get_rect(topleft=(0, 0))
 
+        # Events
+        event.subscribe("SimulationStep", self.update_stats)
+
+        # Perma-text
+        self.step_text = font1.render('Simulation Step:', True, BLACK)
+        self.step_text_rect = self.step_text.get_rect()
+        self.step_text_rect.topleft = (10, (self.height*1.5 - self.step_text_rect.height)//2)
+
+    # Blit the controller surface onto the display
+    def update(self):
+        self.display_surface.blit(self.cntr_surf, self.cntr_rect)
+
+    # Blit everything to the controller surface
+    def draw(self):
+        # Fill grey
+        self.cntr_surf.fill(GREY)
+
+        # Add Border to controller
+        pygame.draw.rect(self.cntr_surf, (5, 125, 110), pygame.Rect(0, 0, self.width, self.height), 5)
+
+        # Add border in center of the controller to separate Stats from buttons
+        pygame.draw.line(self.cntr_surf, (5, 125, 110), (0, self.height//2), (self.width, self.height//2), 4)
+
+        # Display text
+        self.cntr_surf.blit(self.step_text, self.step_text_rect)
+
+    # Update all the statistics displayed on the controller
+    def update_stats(self, data):
+        """
+        data: [current step, no. organisms]
+        """
+
+        curr_step, num_orgs = data
+
+        step_number = font1.render(str(curr_step), True, BLACK)
+        step_num_rect = step_number.get_rect()
+        step_num_rect.topleft = (self.step_text_rect.width+10, (self.height*1.5 - self.step_text_rect.height)//2)
+
+        self.cntr_surf.blit(step_number, step_num_rect)
 
 class EnvView:
 
