@@ -60,9 +60,11 @@ class CntrView:
 
         step_number = font1.render(str(curr_step), True, BLACK)
         step_num_rect = step_number.get_rect()
-        step_num_rect.topleft = (self.step_text_rect.width+10, (self.height*1.5 - self.step_text_rect.height)//2)
+        step_num_rect.topleft = (self.step_text_rect.width+20, (self.height*1.5 - self.step_text_rect.height)//2)
 
+        pygame.draw.rect(self.cntr_surf, GREY, step_num_rect)
         self.cntr_surf.blit(step_number, step_num_rect)
+
 
 class EnvView:
 

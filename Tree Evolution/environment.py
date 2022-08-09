@@ -25,9 +25,9 @@ def tree_dead(tree: Tree):
     c = float(tree.get_number_vertices())
 
     # R is the exponential base
-    r = 1.0
+    r = 1.05
 
-    required_energy = math.pow(r, a) * math.log(c+1, 50)
+    required_energy = math.pow(r, a) * math.log(c+1, 500)
     tree_energy = tree.get_total_energy()
 
     return tree_energy < required_energy
@@ -83,6 +83,8 @@ class Environment:
 
         self.time += 1
         # print(self.time)
+
+        event.post_event("SimulationStep", [self.time, self.get_population()])
 
     # Apply growth constraints to a tree in the environment. Check for death/failure(s).
     def constrain(self, tree: Tree):
