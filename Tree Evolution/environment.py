@@ -58,6 +58,7 @@ class Environment:
         events.subscribe("MoveNode", self.move_node)
         events.subscribe("DeleteNode", self.delete_node)
         events.subscribe("Reset", self.initialize)
+        events.subscribe("NewOffspring", self.add_tree)
 
     # Run a simulation step
     def step(self):
@@ -153,13 +154,28 @@ class Environment:
         return edges
 
     # Instantiate a new tree, positioned at argument 'pos', and finally add to organism list
-    def add_tree(self, x, y):
+    def add_tree(self, data):
+        """
+        data: [x, y, W1:optional, W2:optional]
+        """
+        W1, W2 = None, None
+
+        if len(data) > 2:
+            x, y, W1, W2 = data
+        else:
+            x, y = data
+
         # Check position is available
         if not (self.in_bound(x, y) and self.get_cell(x, y) is None):
             return
 
         # Create a new tree
         tree = Tree(self, x, y)
+
+        if W1 is not None:
+            tree.W1 = W1
+        if W2 is not None:
+            tree.W2 = W2
 
         # Get a hash value for the organism instance
         key = hash(tree)
@@ -189,7 +205,7 @@ class Environment:
         x_positions = np.random.choice(available, size, replace=False)
 
         for x in x_positions:
-            self.add_tree(x, 0)
+            self.add_tree([x, 0])
 
     # Initialize the sun resource as a numpy array, with custom distribution
     def _init_sun(self):

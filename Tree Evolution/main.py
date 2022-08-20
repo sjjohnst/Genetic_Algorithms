@@ -58,6 +58,7 @@ while running:
                 env.step()
             if event.key == pygame.K_r:
                 events.post_event("Reset", None)
+                pause = True
 
     clock.tick(60)
     # print(clock.get_fps())

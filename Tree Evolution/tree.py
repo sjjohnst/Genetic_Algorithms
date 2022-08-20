@@ -295,6 +295,8 @@ class Tree:
             f: Some actions require a factor. f is 'quantity' of change.
         """
         # Features: [x, y, strength, num children, energy]
+
+        # Move position of node
         if 2 > a >= 0:
             # Change feature x,y by factor of f
             # Check energy requirement: log of distance from root
@@ -323,11 +325,13 @@ class Tree:
 
                     events.post_event("MoveNode", [old_pos, new_pos])
 
+        # Increase strength
         elif a == 2:
             # Increase strength by 1
             self.F[v][2] += 1
             self.F[v][4] -= 1
 
+        # Grow a leaf
         elif a == 3:
             # Add a child to the node
             # The leafs position will be same as v_pos, but with y+1
@@ -343,6 +347,12 @@ class Tree:
                 leaf_env_pos = [leaf_pos[0]+self.origin[0], leaf_pos[1]+self.origin[1]]
                 events.post_event("NewNode", [hash(self), leaf_env_pos])
 
+        # Produce a seed
+        elif a == 4:
+            x, y = self.F[v][:2]
+            new_x = x + np.random.choice([-1, 1])
+            self.produce_offspring(new_x, y)
+
         else:
             # Do nothing / Invalid
             pass
@@ -356,33 +366,42 @@ class Tree:
             - Strengthen a leaf
             - ETC
         """
-        # Gather resources from environment
-        self.gather()
+        # If tree origin is not on soil yet, it is a falling seed. Move it downward and exit
+        if self.origin[1] > 0:
+            old_origin = [self.origin[0], self.origin[1]]
+            new_origin = [self.origin[0], self.origin[1]-1]
+            events.post_event("MoveNode", [old_origin, new_origin])
+            self.origin = tuple(new_origin)
 
-        # Do a forward pass of the GNN
-        Z, Y = self.forward()
-        V = len(self.Adj)
+        # Else, tree is rooted. Proceed as normal.
+        else:
+            # Gather resources from environment
+            self.gather()
 
-        # Every node makes a choice
-        for v in range(V):
-            # For the first vertex (the root), cannot shift x or y
-            if v == 0:
-                # Use the probabilistic distribution of this row to select an action (a)
-                a = np.random.choice(self.e-2, p=softmax(Y[v, 2:]))
-                a += 2
+            # Do a forward pass of the GNN
+            Z, Y = self.forward()
+            V = len(self.Adj)
 
-            else:
-                # Use the probabilistic distribution of this row to select an action (a)
-                a = np.random.choice(self.e, p=softmax(Y[v]))
+            # Every node makes a choice
+            for v in range(V):
+                # For the first vertex (the root), cannot shift x or y
+                if v == 0:
+                    # Use the probabilistic distribution of this row to select an action (a)
+                    a = np.random.choice(self.e-2, p=softmax(Y[v, 2:]))
+                    a += 2
 
-            # Get the factor f, located at vertex v, action a, from the Z matrix
-            f = Z[v, a]
+                else:
+                    # Use the probabilistic distribution of this row to select an action (a)
+                    a = np.random.choice(self.e, p=softmax(Y[v]))
 
-            # Perform action (a) on vertex (v) in helper function, by factor f
-            self.execute(v, a, f)
+                # Get the factor f, located at vertex v, action a, from the Z matrix
+                f = Z[v, a]
 
-        # Increment age by 1
-        self.age += 1
+                # Perform action (a) on vertex (v) in helper function, by factor f
+                self.execute(v, a, f)
+
+            # Increment age by 1
+            self.age += 1
 
     # Check if v and all its ancestors can support an additional child
     def strength_check(self, v):
@@ -405,6 +424,24 @@ class Tree:
                 break
 
         return meets_strength
+
+    # Create a seedling, with mutated genetics, at position (x,y)
+    def produce_offspring(self, x, y):
+
+        # Copy the weight matrices
+        W1_copy = self.W1.copy()
+        W2_copy = self.W2.copy()
+
+        # Create two 'mutation' matrices
+        W1_mutation = np.random.normal(0.0, 0.1, (self.d, self.e))
+        W2_mutation = np.random.normal(0.0, 0.1, (self.d, self.e))
+
+        # Combine the copied genes with their mutation matrices
+        W1_new = W1_copy + W1_mutation
+        W2_new = W2_copy + W2_mutation
+
+        # post a new tree event, the environment will handle it
+        events.post_event("NewOffspring", [x, y, W1_new, W2_new])
 
     # Return true if environment cell at 'pos' is empty, false otherwise
     def _pos_available(self, pos):
