@@ -3,6 +3,7 @@ from view import EnvView, CntrView
 import pygame
 from controller import Controller
 from parameters import *
+import events
 
 # Initialize pygame and the scree surface
 pygame.init()
@@ -10,14 +11,17 @@ pygame.init()
 screen = pygame.display.set_mode(screen_size)
 clock = pygame.time.Clock()
 
-FPS = 60
 pygame.display.set_caption("Tree Evolution")
+
+FPS = 60
+# time between each step of the simulation, in milliseconds
+minimum_wait_time = 500
 
 # Instantiate Environment
 env = Environment(75, 30)
 
 # Initialize population
-env.init_population(20)
+env.init_population(45)
 
 # Test environment
 # print("Pop size:", env.get_population())
@@ -38,6 +42,9 @@ cntr_view.draw()
 # Pygame code
 running = True
 pause = True
+
+last_step_time = pygame.time.get_ticks()
+
 while running:
 
     # Process input/events
@@ -49,6 +56,8 @@ while running:
                 pause = not pause
             if event.key == pygame.K_RETURN:
                 env.step()
+            if event.key == pygame.K_r:
+                events.post_event("Reset", None)
 
     clock.tick(60)
     # print(clock.get_fps())
@@ -58,8 +67,10 @@ while running:
     screen.blit(env_surface, env_pos)
     screen.blit(controller_surface, controller_pos)
 
-    if not pause:
+    current_time = pygame.time.get_ticks()
+    if current_time - last_step_time > minimum_wait_time and not pause:
         env.step()
+        last_step_time = pygame.time.get_ticks()
 
     pygame.display.update()
 

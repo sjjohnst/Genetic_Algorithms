@@ -14,5 +14,8 @@ def post_event(event, data):
         # print(event+" Event")
         # Notify all subscribers of 'event', pass data.
         for f in subscribers[event]:
-            f(data)
+            try:
+                f(data)
+            except TypeError:
+                f()
 

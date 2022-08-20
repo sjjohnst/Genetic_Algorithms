@@ -15,7 +15,7 @@ Each environment can contain any number of organisms.
 import math
 import numpy as np
 from tree import Tree
-import event
+import events
 import random
 
 
@@ -54,9 +54,10 @@ class Environment:
         self.cell_updates = dict()
 
         # Subscribe to events
-        event.subscribe("NewNode", self.new_node)
-        event.subscribe("MoveNode", self.move_node)
-        event.subscribe("DeleteNode", self.delete_node)
+        events.subscribe("NewNode", self.new_node)
+        events.subscribe("MoveNode", self.move_node)
+        events.subscribe("DeleteNode", self.delete_node)
+        events.subscribe("Reset", self.initialize)
 
     # Run a simulation step
     def step(self):
@@ -79,12 +80,12 @@ class Environment:
 
         # If there were cell updates, post event
         if self.cell_updates:
-            event.post_event("CellUpdates", self.cell_updates)
+            events.post_event("CellUpdates", self.cell_updates)
 
         self.time += 1
         # print(self.time)
 
-        event.post_event("SimulationStep", [self.time, self.get_population()])
+        events.post_event("SimulationStep", [self.time, self.get_population()])
 
     # Apply growth constraints to a tree in the environment. Check for death/failure(s).
     def constrain(self, tree: Tree):

@@ -14,7 +14,7 @@ Trees also have a set of general traits, which are not associated with any speci
 """
 
 import numpy as np
-import event
+import events
 
 
 def flip(p):
@@ -238,7 +238,7 @@ class Tree:
         x_pos, y_pos = self.F[v][:2]
         true_pos = [x_pos + self.origin[0], y_pos+self.origin[1]]
         data = [hash(self), true_pos]
-        event.post_event("DeleteNode", data)
+        events.post_event("DeleteNode", data)
 
         # Remove node from Adjacency list and feature list
         self.Adj.pop(v)
@@ -321,7 +321,7 @@ class Tree:
                     self.F[v][a] += round(f)
                     self.F[v][4] -= np.log(r)  # Spend energy
 
-                    event.post_event("MoveNode", [old_pos, new_pos])
+                    events.post_event("MoveNode", [old_pos, new_pos])
 
         elif a == 2:
             # Increase strength by 1
@@ -341,7 +341,7 @@ class Tree:
 
                 # Shift l_pos to be in environment grid space
                 leaf_env_pos = [leaf_pos[0]+self.origin[0], leaf_pos[1]+self.origin[1]]
-                event.post_event("NewNode", [hash(self), leaf_env_pos])
+                events.post_event("NewNode", [hash(self), leaf_env_pos])
 
         else:
             # Do nothing / Invalid

@@ -7,7 +7,12 @@ The viewport maps the data of the model (environment) onto the screen.
 """
 import pygame
 from parameters import *
-import event
+import events
+
+
+# Fonts
+pygame.font.init()
+font1 = pygame.font.SysFont('chalkduster.ttf', 20)
 
 
 class CntrView:
@@ -25,12 +30,23 @@ class CntrView:
         self.cntr_rect = self.display_surface.get_rect(topleft=(0, 0))
 
         # Events
-        event.subscribe("SimulationStep", self.update_stats)
+        events.subscribe("SimulationStep", self.update_stats)
+        events.subscribe("Reset", self.reset)
 
-        # Perma-text
+        # PERMANENT TEXT
+        # Simulation step
         self.step_text = font1.render('Simulation Step:', True, BLACK)
         self.step_text_rect = self.step_text.get_rect()
         self.step_text_rect.topleft = (10, (self.height*1.5 - self.step_text_rect.height)//2)
+
+        # Population Size
+        self.pop_text = font1.render('Population Size:', True, BLACK)
+        self.pop_text_rect = self.pop_text.get_rect()
+        self.pop_text_rect.topleft = (10, (self.height*1.25 - self.step_text_rect.height)//2)
+
+    # Reset to have time and population both 0
+    def reset(self, data):
+        self.update_stats([0, 0])
 
     # Blit the controller surface onto the display
     def update(self):
@@ -47,8 +63,9 @@ class CntrView:
         # Add border in center of the controller to separate Stats from buttons
         pygame.draw.line(self.cntr_surf, (5, 125, 110), (0, self.height//2), (self.width, self.height//2), 4)
 
-        # Display text
+        # Display text(s)
         self.cntr_surf.blit(self.step_text, self.step_text_rect)
+        self.cntr_surf.blit(self.pop_text, self.pop_text_rect)
 
     # Update all the statistics displayed on the controller
     def update_stats(self, data):
@@ -58,12 +75,23 @@ class CntrView:
 
         curr_step, num_orgs = data
 
-        step_number = font1.render(str(curr_step), True, BLACK)
+        # Render simulation step
+        step_number = font1.render(str(curr_step)+"   ", True, BLACK)
         step_num_rect = step_number.get_rect()
         step_num_rect.topleft = (self.step_text_rect.width+20, (self.height*1.5 - self.step_text_rect.height)//2)
 
+        # Render population size
+        pop_size = font1.render(str(num_orgs)+"   ", True, BLACK)
+        pop_size_rect = pop_size.get_rect()
+        pop_size_rect.topleft = (self.pop_text_rect.width+20, (self.height*1.25 - self.pop_text_rect.height)//2)
+
+        # Cover old text, then draw the new text to the screen.
         pygame.draw.rect(self.cntr_surf, GREY, step_num_rect)
         self.cntr_surf.blit(step_number, step_num_rect)
+
+        pygame.draw.rect(self.cntr_surf, GREY, pop_size_rect)
+        self.cntr_surf.blit(pop_size, pop_size_rect)
+
 
 
 class EnvView:
@@ -80,7 +108,8 @@ class EnvView:
         self.keyboard_speed = 5
 
         # Subscribe to events
-        event.subscribe("CellUpdates", self.update_cells)
+        events.subscribe("CellUpdates", self.update_cells)
+        events.subscribe("Reset", self.draw)
 
         # Attach the model object, and then have the model attach a reference to this view
         self.env = env

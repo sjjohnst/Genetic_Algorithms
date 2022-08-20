@@ -2,10 +2,6 @@
 Stores constants for the simulation
 """
 
-import pygame
-
-pygame.font.init()
-
 # Colours
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -24,5 +20,3 @@ controller_pos = (0, 0)
 env_size = (600, 400)
 env_pos = (0, controller_size[1])
 
-# Fonts
-font1 = pygame.font.SysFont('chalkduster.ttf', 20)
