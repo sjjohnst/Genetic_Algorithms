@@ -21,7 +21,7 @@ minimum_wait_time = 500
 env = Environment(75, 30)
 
 # Initialize population
-env.init_population(45)
+env.init_population(20)
 
 # Test environment
 # print("Pop size:", env.get_population())

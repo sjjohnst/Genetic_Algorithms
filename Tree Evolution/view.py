@@ -93,7 +93,6 @@ class CntrView:
         self.cntr_surf.blit(pop_size, pop_size_rect)
 
 
-
 class EnvView:
 
     def __init__(self, env, display_surface):
@@ -110,6 +109,8 @@ class EnvView:
         # Subscribe to events
         events.subscribe("CellUpdates", self.update_cells)
         events.subscribe("Reset", self.draw)
+        events.subscribe("NewOffspring", self.new_seed)
+        events.subscribe("SeedUpdates", self.update_seeds)
 
         # Attach the model object, and then have the model attach a reference to this view
         self.env = env
@@ -268,6 +269,34 @@ class EnvView:
                 # print("Blit leaf: ", new_pos)
                 self.blit_cell(new_pos, GREEN)
 
+    # Handle single cell updates. Called when 'CellSeeds' event is pushed
+    def update_seeds(self, data: dict):
+        """
+        data: dictionary of mappings from old_cell -> new_cell to look at and update on display
+        """
+        for old_pos, new_pos in data.items():
+
+            # Extract information
+            old_x, old_y = old_pos
+            old_cell = self.env.get_cell(old_x, old_y)
+
+            # Only covert the old cell with sunlight if no leaf is here
+            if old_cell is None:
+                # print("Covert old cell", old_pos)
+                # Get sunlight value at old cell
+                value = self.env.get_sun(old_x, old_y)
+                sun_rgb = (value * 255 / 2, value * 255 / 2, value * 255 / 2)
+
+                # Now blit sun onto old cell, and leaf (GREEN) onto new cell
+                # print("Blit sun: ", old_pos)
+                self.blit_cell(old_pos, sun_rgb)
+
+            else:
+                self.blit_cell(old_pos, GREEN)
+
+            # Now at new_pos, blit the seed
+            self.blit_cell(new_pos, SEED_BROWN)
+
     # Base function to blit a cell at pos, with rbg value provided
     def blit_cell(self, pos, rbg):
         # Convert the cell position to pixel position
@@ -280,3 +309,10 @@ class EnvView:
         # Adds a blue border to the cells
         pygame.draw.rect(self.env_surface, BLUE, pygame.Rect(x, y, self.cell_size, self.cell_size), 1)
 
+    # For when a new seedling is produced
+    def new_seed(self, data):
+        """
+        data: [x, y, W1, W2]
+        """
+        pos = data[:2]
+        self.blit_cell(pos, BROWN)

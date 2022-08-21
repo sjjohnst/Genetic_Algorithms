@@ -296,40 +296,36 @@ class Tree:
         """
         # Features: [x, y, strength, num children, energy]
 
+        self.F[v][4] -= 0.25
+
         # Move position of node
         if 2 > a >= 0:
             # Change feature x,y by factor of f
-            # Check energy requirement: log of distance from root
-            r = self.F[v][0] ** 2 + self.F[v][1] ** 2 + 1
-            if np.log(r) <= self.F[v][4]:
+            # Grab old node position (shifted by origin), then update it, and spend energy
+            x_old, y_old = self.F[v][:2]
 
-                # Grab old node position (shifted by origin), then update it, and spend energy
-                x_old, y_old = self.F[v][:2]
+            # Update position
+            if a == 0:
+                x_old += round(f)
+            else:
+                y_old += round(f)
 
-                # Update position
-                if a == 0:
-                    x_old += round(f)
-                else:
-                    y_old += round(f)
+            # Grab new position, shifted by origin
+            new_pos = [x_old, y_old]
 
-                # Grab new position, shifted by origin
-                new_pos = [x_old, y_old]
+            # Check if new position is available and in bounds
+            if self._pos_available(new_pos):
+                old_pos = [self.F[v][0] + self.origin[0], self.F[v][1] + self.origin[1]]
+                new_pos = [x_old + self.origin[0], y_old + self.origin[1]]
 
-                # Check if new position is available and in bounds
-                if self._pos_available(new_pos):
-                    old_pos = [self.F[v][0] + self.origin[0], self.F[v][1] + self.origin[1]]
-                    new_pos = [x_old + self.origin[0], y_old + self.origin[1]]
+                self.F[v][a] += round(f)
 
-                    self.F[v][a] += round(f)
-                    self.F[v][4] -= np.log(r)  # Spend energy
-
-                    events.post_event("MoveNode", [old_pos, new_pos])
+                events.post_event("MoveNode", [old_pos, new_pos])
 
         # Increase strength
         elif a == 2:
             # Increase strength by 1
             self.F[v][2] += 1
-            self.F[v][4] -= 1
 
         # Grow a leaf
         elif a == 3:
@@ -341,7 +337,6 @@ class Tree:
                 # Add new node, add edge to parent, and finally update energy
                 self.add_vertex(leaf_pos)
                 self.add_edge(v, self.last_id)
-                self.F[v][4] -= 2
 
                 # Shift l_pos to be in environment grid space
                 leaf_env_pos = [leaf_pos[0]+self.origin[0], leaf_pos[1]+self.origin[1]]
@@ -355,6 +350,7 @@ class Tree:
 
         else:
             # Do nothing / Invalid
+            self.F[4] += 0.5
             pass
 
     # Perform a simulation step; Gather resources, Forward pass GNN, Execute actions
@@ -366,42 +362,33 @@ class Tree:
             - Strengthen a leaf
             - ETC
         """
-        # If tree origin is not on soil yet, it is a falling seed. Move it downward and exit
-        if self.origin[1] > 0:
-            old_origin = [self.origin[0], self.origin[1]]
-            new_origin = [self.origin[0], self.origin[1]-1]
-            events.post_event("MoveNode", [old_origin, new_origin])
-            self.origin = tuple(new_origin)
+        # Gather resources from environment
+        self.gather()
 
-        # Else, tree is rooted. Proceed as normal.
-        else:
-            # Gather resources from environment
-            self.gather()
+        # Do a forward pass of the GNN
+        Z, Y = self.forward()
+        V = len(self.Adj)
 
-            # Do a forward pass of the GNN
-            Z, Y = self.forward()
-            V = len(self.Adj)
+        # Every node makes a choice
+        for v in range(V):
+            # For the first vertex (the root), cannot shift x or y
+            if v == 0:
+                # Use the probabilistic distribution of this row to select an action (a)
+                a = np.random.choice(self.e-2, p=softmax(Y[v, 2:]))
+                a += 2
 
-            # Every node makes a choice
-            for v in range(V):
-                # For the first vertex (the root), cannot shift x or y
-                if v == 0:
-                    # Use the probabilistic distribution of this row to select an action (a)
-                    a = np.random.choice(self.e-2, p=softmax(Y[v, 2:]))
-                    a += 2
+            else:
+                # Use the probabilistic distribution of this row to select an action (a)
+                a = np.random.choice(self.e, p=softmax(Y[v]))
 
-                else:
-                    # Use the probabilistic distribution of this row to select an action (a)
-                    a = np.random.choice(self.e, p=softmax(Y[v]))
+            # Get the factor f, located at vertex v, action a, from the Z matrix
+            f = Z[v, a]
 
-                # Get the factor f, located at vertex v, action a, from the Z matrix
-                f = Z[v, a]
+            # Perform action (a) on vertex (v) in helper function, by factor f
+            self.execute(v, a, f)
 
-                # Perform action (a) on vertex (v) in helper function, by factor f
-                self.execute(v, a, f)
-
-            # Increment age by 1
-            self.age += 1
+        # Increment age by 1
+        self.age += 1
 
     # Check if v and all its ancestors can support an additional child
     def strength_check(self, v):
@@ -433,8 +420,8 @@ class Tree:
         W2_copy = self.W2.copy()
 
         # Create two 'mutation' matrices
-        W1_mutation = np.random.normal(0.0, 0.1, (self.d, self.e))
-        W2_mutation = np.random.normal(0.0, 0.1, (self.d, self.e))
+        W1_mutation = np.random.normal(0.0, 0.05, (self.d, self.e))
+        W2_mutation = np.random.normal(0.0, 0.05, (self.d, self.e))
 
         # Combine the copied genes with their mutation matrices
         W1_new = W1_copy + W1_mutation

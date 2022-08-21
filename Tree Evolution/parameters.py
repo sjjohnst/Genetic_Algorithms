@@ -9,6 +9,7 @@ BLACK_A = (0, 0, 0, 0.1)
 GREY = (70, 70, 70, 0.25)
 GREEN = (5, 135, 75)
 BROWN = (75, 45, 10)
+SEED_BROWN = (75, 45, 10, 0.25)
 BLUE = (25, 25, 80)
 
 # Display sizes

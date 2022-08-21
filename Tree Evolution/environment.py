@@ -27,7 +27,8 @@ def tree_dead(tree: Tree):
     # R is the exponential base
     r = 1.05
 
-    required_energy = math.pow(r, a) * math.log(c+1, 500)
+    # required_energy = math.pow(r, a) * math.log(c+1, 500)
+    required_energy = math.pow(r, a) - 1.0
     tree_energy = tree.get_total_energy()
 
     return tree_energy < required_energy
@@ -46,19 +47,20 @@ class Environment:
         self.width = width
         self.height = height
 
-        self.time, self.env, self.sun, self.trees = None, None, None, None
+        self.time, self.env, self.sun, self.trees, self.seeds = [None] * 5
         self.initialize()
 
         # Dictionary to hold cell updates.
         # Maps old locations to new locations, facilitating the view to update required cells
         self.cell_updates = dict()
+        self.seed_updates = dict()
 
         # Subscribe to events
         events.subscribe("NewNode", self.new_node)
         events.subscribe("MoveNode", self.move_node)
         events.subscribe("DeleteNode", self.delete_node)
         events.subscribe("Reset", self.initialize)
-        events.subscribe("NewOffspring", self.add_tree)
+        events.subscribe("NewOffspring", self.add_seedling)
 
     # Run a simulation step
     def step(self):
@@ -68,6 +70,8 @@ class Environment:
             - Get all trees to do a step (make decision)
             - Update accordingly
         """
+        # Perform all seedling updates
+        self.update_seeds()
 
         # Begin by emptying 'cell_updates'. All new updates will be added by trees.
         self.cell_updates.clear()
@@ -99,6 +103,32 @@ class Environment:
             self.trees.pop(key)
             del tree
 
+    def update_seeds(self):
+        self.seed_updates.clear()
+
+        # First sort the seeds by their y position
+        self.seeds = sorted(self.seeds, key = lambda x: x[1])
+
+        for seed in self.seeds:
+            # Seed[1] is y position
+            if seed[1] == 0:
+                # Add a tree with this origin and W1, W2 matrices, if possible
+                if self.get_cell(seed[0], seed[1]) is None:
+                    self.add_tree(seed)
+            else:
+                # Decrement y by 1
+                seed[1] -= 1
+                self.seed_updates[(seed[0], seed[1]-1)] = (seed[0], seed[1])
+
+        events.post_event("SeedUpdates", self.seed_updates)
+
+    # Add a seed to the environment
+    def add_seedling(self, data):
+        """
+        data: [x, y, W1, W2]
+        """
+        self.seeds.append(data)
+
     # Initialize environment base
     def initialize(self):
         """
@@ -118,6 +148,9 @@ class Environment:
 
         # Dictionary (hash map) to store organisms
         self.trees = dict()
+
+        # Seeds is used to store seeds produced by trees
+        self.seeds = list()
 
     # Check if position falls within environment grid
     def in_bound(self, x, y):
@@ -162,6 +195,7 @@ class Environment:
 
         if len(data) > 2:
             x, y, W1, W2 = data
+            print("NewOffspring")
         else:
             x, y = data
 
@@ -173,9 +207,9 @@ class Environment:
         tree = Tree(self, x, y)
 
         if W1 is not None:
-            tree.W1 = W1
+            tree.W1 = W1.copy()
         if W2 is not None:
-            tree.W2 = W2
+            tree.W2 = W2.copy()
 
         # Get a hash value for the organism instance
         key = hash(tree)
@@ -186,7 +220,7 @@ class Environment:
 
         # Finally, insert (key,value) into the hashmap, and update the environment to contain leaf at position
         self.trees[key] = tree
-        self.env[y][x] = key
+        self.new_node([key, [x, y]])
 
     # Initialize a new population of random organisms
     def init_population(self, size):
